@@ -1,0 +1,303 @@
+[
+  {
+    "name": "Classic Manicure",
+    "shortDescription": "Cuticle care, shaping, and polish. Add gel for +$15.",
+    "duration": "30 min",
+    "priceFrom": 20,
+    "category": "Manicure"
+  },
+  {
+    "name": "Deluxe Manicure",
+    "shortDescription": "Includes exfoliation and massage. Add gel for +$15.",
+    "duration": "45 min",
+    "priceFrom": 28,
+    "category": "Manicure"
+  },
+  {
+    "name": "Acrylic Full Set",
+    "shortDescription": "Durable extensions with acrylic powder.",
+    "duration": "60 min",
+    "priceFrom": 40,
+    "category": "Acrylic"
+  },
+  {
+    "name": "Acrylic Fill-in",
+    "shortDescription": "Maintenance for acrylic sets.",
+    "duration": "45 min",
+    "priceFrom": 35,
+    "category": "Acrylic"
+  },
+  {
+    "name": "Acrylic Full Set w/ Gel",
+    "shortDescription": "Acrylic extensions finished with gel polish.",
+    "duration": "75 min",
+    "priceFrom": 55,
+    "category": "Acrylic"
+  },
+  {
+    "name": "Acrylic Fill w/ Gel",
+    "shortDescription": "Acrylic maintenance with gel polish finish.",
+    "duration": "60 min",
+    "priceFrom": 47,
+    "category": "Acrylic"
+  },
+  {
+    "name": "Acrylic Ombre",
+    "shortDescription": "Two-tone blended acrylic design.",
+    "duration": "75 min",
+    "priceFrom": 65,
+    "category": "Acrylic"
+  },
+  {
+    "name": "Builder Gel Full Set",
+    "shortDescription": "Strong, flexible gel extensions.",
+    "duration": "75 min",
+    "priceFrom": 55,
+    "category": "Builder Gel"
+  },
+  {
+    "name": "Builder Gel Fill-in",
+    "shortDescription": "Maintenance for builder gel sets.",
+    "duration": "60 min",
+    "priceFrom": 50,
+    "category": "Builder Gel"
+  },
+  {
+    "name": "Gel X",
+    "shortDescription": "Full coverage soft gel extension system.",
+    "duration": "60 min",
+    "priceFrom": 60,
+    "category": "Builder Gel"
+  },
+  {
+    "name": "Dip Color",
+    "shortDescription": "Long-lasting dip powder color.",
+    "duration": "45 min",
+    "priceFrom": 45,
+    "category": "Dipping"
+  },
+  {
+    "name": "Dip French",
+    "shortDescription": "Classic French tip with dip powder.",
+    "duration": "60 min",
+    "priceFrom": 52,
+    "category": "Dipping"
+  },
+  {
+    "name": "Nail Design",
+    "shortDescription": "Custom art. Price varies based on design.",
+    "duration": "Var",
+    "priceFrom": 5,
+    "category": "Add-Ons"
+  },
+  {
+    "name": "Cat Eyes",
+    "shortDescription": "Magnetic cat eye effect.",
+    "duration": "Add-on",
+    "priceFrom": 12,
+    "category": "Add-Ons"
+  },
+  {
+    "name": "Chrome",
+    "shortDescription": "Mirror or iridescent chrome finish.",
+    "duration": "Add-on",
+    "priceFrom": 10,
+    "category": "Add-Ons"
+  },
+  {
+    "name": "French Tip",
+    "shortDescription": "Classic white or colored tips.",
+    "duration": "Add-on",
+    "priceFrom": 7,
+    "category": "Add-Ons"
+  },
+  {
+    "name": "Shapes",
+    "shortDescription": "Custom nail shaping (Almond, Coffin, Stiletto, etc).",
+    "duration": "Add-on",
+    "priceFrom": 5,
+    "category": "Add-Ons"
+  },
+  {
+    "name": "Length",
+    "shortDescription": "Extra length for extensions.",
+    "duration": "Add-on",
+    "priceFrom": 5,
+    "category": "Add-Ons"
+  },
+  {
+    "name": "Refresh Pedicure",
+    "shortDescription": "Essential foot care.",
+    "duration": "25–30 min",
+    "priceFrom": 32,
+    "category": "Pedicure"
+  },
+  {
+    "name": "Premium Pedicure",
+    "shortDescription": "Essential foot care.",
+    "duration": "30-35 min",
+    "priceFrom": 38,
+    "category": "Pedicure"
+  },
+  {
+    "name": "Deluxe Glow Pedicure",
+    "shortDescription": "Includes exfoliation and glow treatment.",
+    "duration": "35–40 min",
+    "priceFrom": 45,
+    "category": "Pedicure"
+  },
+  {
+    "name": "Organic Fresh Pedicure",
+    "shortDescription": "Organic products for a fresh feel.",
+    "duration": "45–50 min",
+    "priceFrom": 55,
+    "category": "Pedicure"
+  },
+  {
+    "name": "Collagen Smooth / Volcano Spa",
+    "shortDescription": "Deeply moisturizing collagen or erupting volcano spa experience.",
+    "duration": "55–60 min",
+    "priceFrom": 65,
+    "category": "Pedicure"
+  },
+  {
+    "name": "Espresso Pedicure",
+    "shortDescription": "Essential foot care.",
+    "duration": "65-70 min",
+    "priceFrom": 75,
+    "category": "Pedicure"
+  },
+  {
+    "name": "Golden Pedicure",
+    "shortDescription": "Luxurious golden treatment.",
+    "duration": "65–70 min",
+    "priceFrom": 75,
+    "category": "Pedicure"
+  },
+  {
+    "name": "Pedicure Gel Polish",
+    "shortDescription": "Long-wear gel polish add-on for toes.",
+    "duration": "Add-on",
+    "priceFrom": 15,
+    "category": "Pedicure Add-Ons"
+  },
+  {
+    "name": "Paraffin Treatment",
+    "shortDescription": "Warm wax for soft skin.",
+    "duration": "Add-on",
+    "priceFrom": 10,
+    "category": "Pedicure Add-Ons"
+  },
+  {
+    "name": "5-min Massage",
+    "shortDescription": "Extended foot and leg massage.",
+    "duration": "5 min",
+    "priceFrom": 10,
+    "category": "Pedicure Add-Ons"
+  },
+  {
+    "name": "Eyebrows Wax",
+    "shortDescription": "Shaping and cleanup.",
+    "duration": "15 min",
+    "priceFrom": 15,
+    "category": "Waxing"
+  },
+  {
+    "name": "Upper Lip Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "10 min",
+    "priceFrom": 10,
+    "category": "Waxing"
+  },
+  {
+    "name": "Chin Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "10 min",
+    "priceFrom": 13,
+    "category": "Waxing"
+  },
+  {
+    "name": "Sideburns Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "15 min",
+    "priceFrom": 20,
+    "category": "Waxing"
+  },
+  {
+    "name": "Full Face Wax",
+    "shortDescription": "Complete face hair removal.",
+    "duration": "30 min",
+    "priceFrom": 55,
+    "category": "Waxing"
+  },
+  {
+    "name": "Full Arms Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "30 min",
+    "priceFrom": 50,
+    "category": "Waxing"
+  },
+  {
+    "name": "Half Arms Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "20 min",
+    "priceFrom": 30,
+    "category": "Waxing"
+  },
+  {
+    "name": "Full Legs Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "45 min",
+    "priceFrom": 80,
+    "category": "Waxing"
+  },
+  {
+    "name": "Half Legs Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "30 min",
+    "priceFrom": 40,
+    "category": "Waxing"
+  },
+  {
+    "name": "Bikini Wax",
+    "shortDescription": "Hair removal.",
+    "duration": "30 min",
+    "priceFrom": 50,
+    "category": "Waxing"
+  },
+  {
+    "name": "Brazilian Wax",
+    "shortDescription": "Complete hair removal.",
+    "duration": "45 min",
+    "priceFrom": 80,
+    "category": "Waxing"
+  },
+  {
+    "name": "Kid Manicure",
+    "shortDescription": "For children under 12.",
+    "duration": "20 min",
+    "priceFrom": 17,
+    "category": "Kids"
+  },
+  {
+    "name": "Kid Pedicure",
+    "shortDescription": "For children under 12.",
+    "duration": "30 min",
+    "priceFrom": 25,
+    "category": "Kids"
+  },
+  {
+    "name": "Kid Polish Change Hands",
+    "shortDescription": "Regular polish change.",
+    "duration": "15 min",
+    "priceFrom": 12,
+    "category": "Kids"
+  },
+  {
+    "name": "Kid Polish Change Feet",
+    "shortDescription": "Regular polish change.",
+    "duration": "15 min",
+    "priceFrom": 15,
+    "category": "Kids"
+  }
+]

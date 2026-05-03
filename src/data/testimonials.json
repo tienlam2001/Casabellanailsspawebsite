@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Sofia M.",
+    "service": "Luxury Spa Pedicure",
+    "quote": "The space feels calm and clean, and my pedicure lasted for weeks. The hot stone massage was perfection.",
+    "rating": 5
+  },
+  {
+    "name": "Lena R.",
+    "service": "Signature Gel Manicure",
+    "quote": "My nails have never looked so natural and glossy. They remembered my preferences and matched my style exactly.",
+    "rating": 5
+  },
+  {
+    "name": "Grace A.",
+    "service": "Dip Powder Perfection",
+    "quote": "Impressive attention to hygiene and detail. The team is warm, and the atmosphere feels like a boutique spa.",
+    "rating": 4
+  }
+]
