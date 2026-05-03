@@ -265,6 +265,7 @@ const AdminServices = () => {
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button to={ROUTES.adminAdvertise} variant="secondary">Go to Advertise</Button>
+            <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={`${ROUTES.home}?previewOffer=1`} variant="ghost">Preview Popup</Button>
           </div>
           <p className="muted" style={{ marginTop: '1rem', marginBottom: 0 }}>

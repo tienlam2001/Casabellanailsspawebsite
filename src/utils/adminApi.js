@@ -5,14 +5,13 @@ import {
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
   setDoc,
   updateDoc,
-  where,
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
@@ -141,6 +140,49 @@ const createService = async (service) => {
   return getServices();
 };
 
+const normalizeGalleryItem = (id, item) => ({
+  id,
+  imageUrl: String(item?.imageUrl || '').trim(),
+  alt: String(item?.alt || '').trim(),
+  category: String(item?.category || '').trim(),
+});
+
+const getGalleryImages = async () => {
+  const snapshot = await getDocs(collection(db, 'galleryImages'));
+  return snapshot.docs
+    .map((docItem) => normalizeGalleryItem(docItem.id, docItem.data()))
+    .filter((item) => item.imageUrl && item.category);
+};
+
+const createGalleryImage = async (payload) => {
+  ensureAdminUser(auth.currentUser);
+  await addDoc(collection(db, 'galleryImages'), {
+    imageUrl: String(payload.imageUrl || '').trim(),
+    alt: String(payload.alt || '').trim(),
+    category: String(payload.category || '').trim(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return getGalleryImages();
+};
+
+const updateGalleryImage = async (id, payload) => {
+  ensureAdminUser(auth.currentUser);
+  await updateDoc(doc(db, 'galleryImages', id), {
+    imageUrl: String(payload.imageUrl || '').trim(),
+    alt: String(payload.alt || '').trim(),
+    category: String(payload.category || '').trim(),
+    updatedAt: serverTimestamp(),
+  });
+  return getGalleryImages();
+};
+
+const deleteGalleryImage = async (id) => {
+  ensureAdminUser(auth.currentUser);
+  await deleteDoc(doc(db, 'galleryImages', id));
+  return getGalleryImages();
+};
+
 export {
   ADMIN_TOKEN_KEY,
   getAdminToken,
@@ -152,4 +194,8 @@ export {
   getServices,
   updateServicePrices,
   createService,
+  getGalleryImages,
+  createGalleryImage,
+  updateGalleryImage,
+  deleteGalleryImage,
 };

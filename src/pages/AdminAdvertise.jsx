@@ -150,6 +150,7 @@ const AdminAdvertise = () => {
           </p>
           <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button to={ROUTES.adminServices} variant="secondary">Go to Services Pricing</Button>
+            <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
           </div>
         </Card>
       </div>

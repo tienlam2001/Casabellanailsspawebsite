@@ -5,6 +5,7 @@ import Button from '../components/Button';
 import Modal from '../components/Modal';
 import ROUTES from '../constants/routes';
 import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { getGalleryImages } from '../utils/adminApi';
 
 // Auto-import all images by folder
 const nailModules = import.meta.glob('../assets/nails/*.{png,jpg,jpeg,webp}', { eager: true });
@@ -21,22 +22,47 @@ const CATEGORY_IMAGES = {
   Interior: mapImgs(interiorModules),
 };
 
+const getDefaultGallery = () =>
+  Object.entries(CATEGORY_IMAGES).flatMap(([category, list]) =>
+    list.map((item) => ({ ...item, category }))
+  );
+
 const Gallery = () => {
   useEffect(() => {
     setDocumentTitle('Gallery');
     setMetaDescription('View the Casabella Nail & Spa gallery featuring nail art, spa pedicures, and calming moments from our Oviedo, Florida studio.');
   }, []);
 
-  const categories = useMemo(() => ['All', ...Object.keys(CATEGORY_IMAGES)], []);
   const [filter, setFilter] = useState('All');
   const [activeImage, setActiveImage] = useState(null);
+  const [remoteImages, setRemoteImages] = useState([]);
 
-  const filtered =
-    filter === 'All'
-      ? Object.entries(CATEGORY_IMAGES).flatMap(([category, list]) =>
-          list.map((item) => ({ ...item, category }))
-        )
-      : (CATEGORY_IMAGES[filter] || []).map((item) => ({ ...item, category: filter }));
+  useEffect(() => {
+    const loadGallery = async () => {
+      try {
+        const list = await getGalleryImages();
+        if (Array.isArray(list)) setRemoteImages(list);
+      } catch {
+        setRemoteImages([]);
+      }
+    };
+
+    loadGallery();
+  }, []);
+
+  const allImages = useMemo(() => {
+    if (remoteImages.length > 0) return remoteImages;
+    return getDefaultGallery();
+  }, [remoteImages]);
+
+  const categories = useMemo(
+    () => ['All', ...Array.from(new Set(allImages.map((item) => item.category).filter(Boolean)))],
+    [allImages]
+  );
+
+  const filtered = filter === 'All'
+    ? allImages
+    : allImages.filter((item) => item.category === filter);
 
   const RATIOS = ['4 / 5', '1 / 1', '3 / 4', '4 / 3'];
 

@@ -11,6 +11,7 @@ import NotFound from './pages/NotFound';
 import AdminLogin from './pages/AdminLogin';
 import AdminAdvertise from './pages/AdminAdvertise';
 import AdminServices from './pages/AdminServices';
+import AdminGallery from './pages/AdminGallery';
 import ROUTES from './constants/routes';
 import './index.css';
 
@@ -27,6 +28,7 @@ const App = () => (
       <Route path={ROUTES.adminLogin} element={<AdminLogin />} />
       <Route path={ROUTES.adminAdvertise} element={<AdminAdvertise />} />
       <Route path={ROUTES.adminServices} element={<AdminServices />} />
+      <Route path={ROUTES.adminGallery} element={<AdminGallery />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Layout>
