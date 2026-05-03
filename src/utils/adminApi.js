@@ -1,5 +1,26 @@
-const API_BASE = import.meta.env.VITE_ADMIN_API_BASE || 'http://localhost:8787';
+import {
+  signInWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { auth, db } from '../firebase';
+
 const ADMIN_TOKEN_KEY = 'adminAuthToken';
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
 const getAdminToken = () => {
   if (typeof window === 'undefined') return null;
@@ -15,77 +36,117 @@ const setAdminToken = (token) => {
   window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
 };
 
-const request = async (path, options = {}) => {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const err = new Error(data?.error || 'Request failed');
-    err.status = response.status;
-    throw err;
-  }
-
-  return data;
+const ensureAdminUser = (user) => {
+  if (!user?.email) throw new Error('Please sign in.');
+  if (ADMIN_EMAILS.length === 0) return;
+  const allowed = ADMIN_EMAILS.includes(user.email.toLowerCase());
+  if (!allowed) throw new Error('Your account is not allowed as admin.');
 };
 
-const loginAdmin = ({ username, password }) =>
-  request('/api/admin/login', {
-    method: 'POST',
-    body: JSON.stringify({ username, password }),
-  });
+const loginAdmin = async ({ username, email, password }) => {
+  const nextEmail = String(email || username || '').trim();
+  const credentials = await signInWithEmailAndPassword(auth, nextEmail, password);
+  ensureAdminUser(credentials.user);
+  const jwt = await credentials.user.getIdToken();
+  setAdminToken(jwt);
+  return {
+    token: jwt,
+    username: credentials.user.email,
+    expiresInHours: 12,
+  };
+};
+
+const logoutAdmin = async () => {
+  await signOut(auth);
+  setAdminToken(null);
+};
 
 const getWelcomeOffer = async () => {
-  const data = await request('/api/offers/welcome');
-  return data.offer;
+  const snapshot = await getDoc(doc(db, 'offers', 'welcome'));
+  if (!snapshot.exists()) return null;
+  return snapshot.data();
 };
 
 const updateWelcomeOffer = async (offer) => {
-  const token = getAdminToken();
-  const data = await request('/api/admin/offers/welcome', {
-    method: 'PUT',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: JSON.stringify({ offer }),
-  });
-  return data.offer;
+  ensureAdminUser(auth.currentUser);
+  const payload = {
+    ...offer,
+    updatedAt: serverTimestamp(),
+  };
+  await setDoc(doc(db, 'offers', 'welcome'), payload, { merge: true });
+  return offer;
 };
 
+const normalizeService = (item) => ({
+  name: item.name,
+  shortDescription: item.shortDescription,
+  duration: item.duration,
+  category: item.category,
+  priceFrom: item.priceFrom,
+  key: item.key || `${item.name}::${item.category}`,
+});
+
 const getServices = async () => {
-  const data = await request('/api/services');
-  return data.services;
+  const snapshot = await getDocs(collection(db, 'services'));
+  return snapshot.docs.map((docItem) => normalizeService({ ...docItem.data() }));
 };
 
 const updateServicePrices = async (updates) => {
-  const token = getAdminToken();
-  const data = await request('/api/admin/services/prices', {
-    method: 'PUT',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: JSON.stringify({ updates }),
-  });
-  return data.services;
+  ensureAdminUser(auth.currentUser);
+  const snapshot = await getDocs(collection(db, 'services'));
+  const servicesByKey = new Map();
+  for (const item of snapshot.docs) {
+    const data = item.data();
+    const key = `${String(data?.name || '').trim()}::${String(data?.category || '').trim()}`;
+    servicesByKey.set(key, item);
+  }
+
+  for (const update of updates) {
+    const key = `${String(update.name).trim()}::${String(update.category).trim()}`;
+    const serviceDoc = servicesByKey.get(key);
+    if (!serviceDoc) {
+      throw new Error(`Unknown service: ${update.name} (${update.category})`);
+    }
+    await updateDoc(doc(db, 'services', serviceDoc.id), {
+      priceFrom: update.priceFrom,
+      key,
+      updatedAt: serverTimestamp(),
+    });
+  }
+  return getServices();
 };
 
 const createService = async (service) => {
-  const token = getAdminToken();
-  const data = await request('/api/admin/services', {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: JSON.stringify({ service }),
+  ensureAdminUser(auth.currentUser);
+  const key = `${String(service.name).trim()}::${String(service.category).trim()}`;
+  const existing = await getDocs(collection(db, 'services'));
+  const exists = existing.docs.some((item) => {
+    const data = item.data();
+    const existingKey = `${String(data?.name || '').trim()}::${String(data?.category || '').trim()}`;
+    return existingKey === key;
   });
-  return data.services;
+  if (exists) throw new Error('Service already exists for that name and category');
+
+  await addDoc(collection(db, 'services'), {
+    name: service.name.trim(),
+    shortDescription: service.shortDescription.trim(),
+    duration: service.duration.trim(),
+    category: service.category.trim(),
+    priceFrom: service.priceFrom,
+    key,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return getServices();
 };
 
 export {
-  API_BASE,
   ADMIN_TOKEN_KEY,
   getAdminToken,
   setAdminToken,
   loginAdmin,
+  logoutAdmin,
   getWelcomeOffer,
   updateWelcomeOffer,
   getServices,

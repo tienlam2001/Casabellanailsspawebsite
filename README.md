@@ -5,18 +5,24 @@ Luxury, mobile-first React + Vite site with React Router and handcrafted CSS (no
 ## Run locally
 1) Install deps: `npm install`
 2) Copy env template: `cp .env.example .env` and set secure admin values
-3) Start app + admin API: `npm run dev:full`
+3) Start app: `npm run dev`
 4) Production build: `npm run build` then `npm run preview`
 
-## Admin login and advertising
+## Firebase admin setup
+- This app now uses Firebase Authentication + Firestore for admin login and content editing.
+- Configure Firebase values in `.env` from your Firebase project settings.
+- Set `VITE_ADMIN_EMAILS` to allowed admin account emails.
+- In Firebase Auth, create email/password users for admins.
+- In Firestore, create:
+  - Collection `offers`, document `welcome` (popup content fields)
+  - Collection `services` with fields:
+    `name`, `shortDescription`, `duration`, `category`, `priceFrom`, `key`
+    where `key` is `name::category`
+
+## Admin pages
 - Admin login route: `/admin/login`
 - Admin panel route: `/admin/advertise`
 - Admin services pricing route: `/admin/services`
-- Admin auth is handled by backend token API (`server/index.js`)
-- Configure credentials and secret via `.env`:
-`ADMIN_USER`, `ADMIN_PASSWORD`, `AUTH_SECRET`, `ADMIN_ALLOWED_ORIGIN`
-- Frontend API base uses:
-`VITE_ADMIN_API_BASE` (default `http://localhost:8787`)
 
 ## Customize content
 - Business info: edit text in `src/components/NavBar.jsx` and `src/components/Footer.jsx`.
@@ -26,7 +32,7 @@ Luxury, mobile-first React + Vite site with React Router and handcrafted CSS (no
 - Gallery: tweak image list in `src/pages/Gallery.jsx` (`src`, `alt`, `category`).
 - Hero/Home copy: adjust sections in `src/pages/Home.jsx`.
 - Forms store submissions to `localStorage` under `bookingRequests` and `contactRequests`.
-- Offer popup content is fetched from backend API and cached in `localStorage` as fallback.
+- Offer popup content is fetched from Firestore and cached in `localStorage` as fallback.
 
 ## Notes
 - Styling lives in `src/index.css` (CSS variables, layout, buttons, cards, forms).

@@ -16,7 +16,7 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const existingSession = getFromStorage(ADMIN_SESSION_KEY, null);
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -61,13 +61,14 @@ const AdminLogin = () => {
       <div className="container" style={{ maxWidth: '620px', padding: 0 }}>
         <Card>
           <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={onSubmit} noValidate>
-            <FormField label="Username" required>
+            <FormField label="Admin Email" required>
               <FormField.Input
-                name="username"
-                value={form.username}
+                name="email"
+                type="email"
+                value={form.email || form.username}
                 onChange={onChange}
-                autoComplete="username"
-                placeholder="admin"
+                autoComplete="email"
+                placeholder="admin@example.com"
               />
             </FormField>
             <FormField label="Password" required>

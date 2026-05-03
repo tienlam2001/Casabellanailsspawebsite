@@ -96,6 +96,16 @@ const Services = () => {
     saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
   };
 
+  const toWriteErrorMessage = (err, fallback) => {
+    if (err?.code === 'permission-denied') {
+      return 'Firebase denied write access. Check Firestore Rules and make sure this admin email is allowed.';
+    }
+    if (err?.code === 'unauthenticated') {
+      return 'Please sign in again to continue.';
+    }
+    return err?.message || fallback;
+  };
+
   const startEdit = (service) => {
     setEditingKey(serviceKey(service));
     setEditingPrice(String(service.priceFrom));
@@ -143,16 +153,12 @@ const Services = () => {
       setNotice(`Saved new price for ${service.name}.`);
       cancelEdit();
     } catch (err) {
-      if (err.status === 401) {
+      if (err?.status === 401 || err?.code === 'unauthenticated') {
         clearAdminSession();
         setError('Admin session expired. Please log in again.');
         return;
       }
-      if (err.status === 404) {
-        setError('Price API endpoint was not found. Restart/update your backend server and try again.');
-        return;
-      }
-      setError(err.message || 'Unable to save price.');
+      setError(toWriteErrorMessage(err, 'Unable to save price.'));
     } finally {
       setSaving(false);
     }
@@ -206,16 +212,12 @@ const Services = () => {
       setNewService(initialNewService);
       setNotice(`Added ${payload.name}.`);
     } catch (err) {
-      if (err.status === 401) {
+      if (err?.status === 401 || err?.code === 'unauthenticated') {
         clearAdminSession();
         setError('Admin session expired. Please log in again.');
         return;
       }
-      if (err.status === 404) {
-        setError('Add-service API endpoint was not found. Restart/update your backend server and try again.');
-        return;
-      }
-      setError(err.message || 'Unable to add service.');
+      setError(toWriteErrorMessage(err, 'Unable to add service.'));
     } finally {
       setSaving(false);
     }
