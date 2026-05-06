@@ -4,10 +4,12 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import postsData from '../data/posts.json';
 import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import useBlogPosts from '../hooks/useBlogPosts';
 
 const BlogList = () => {
+  const postsData = useBlogPosts();
+
   useEffect(() => {
     setDocumentTitle('Blog');
     setMetaDescription('Read the Casabella Nail & Spa journal for nail care tips, spa rituals, and Oviedo, Florida spotlights.');
@@ -18,7 +20,7 @@ const BlogList = () => {
       [...postsData].sort(
         (a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf()
       ),
-    []
+    [postsData]
   );
 
   return (

@@ -864,6 +864,42 @@ img {
   gap: 0.6rem;
 }
 
+.welcome-offer-slides {
+  margin-top: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.welcome-slide-btn {
+  border: 1px solid rgba(195, 159, 73, 0.35);
+  background: #fff;
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.welcome-slide-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.welcome-slide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(76, 85, 99, 0.28);
+  cursor: pointer;
+}
+
+.welcome-slide-dot.active {
+  background: var(--gold-500);
+}
+
 .cta-strip {
   display: flex;
   flex-direction: column;

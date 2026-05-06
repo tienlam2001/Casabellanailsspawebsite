@@ -7,11 +7,13 @@ import Button from '../components/Button';
 import ROUTES from '../constants/routes';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 import { setDocumentTitle, setMetaDescription, setRobotsMeta } from '../utils/seo';
+import defaultServices from '../data/services.json';
 import {
   getAdminToken,
   setAdminToken,
   getServices,
   updateServicePrices,
+  seedServicesCollection,
 } from '../utils/adminApi';
 
 const ADMIN_SESSION_KEY = 'adminSession';
@@ -177,6 +179,29 @@ const AdminServices = () => {
     }
   };
 
+  const seedFromDefaults = async (overwrite = false) => {
+    try {
+      setSaving(true);
+      setNotice('');
+      setError('');
+      const token = getAdminToken();
+      if (!token) {
+        navigate(ROUTES.adminLogin, { replace: true });
+        return;
+      }
+      const next = await seedServicesCollection(defaultServices, { overwrite });
+      setServices(next);
+      const nextDraft = {};
+      for (const service of next) nextDraft[toKey(service)] = String(service.priceFrom);
+      setDraftPrices(nextDraft);
+      setNotice(overwrite ? 'Services reset from local defaults.' : 'Firebase services initialized from local defaults.');
+    } catch (err) {
+      setError(err.message || 'Unable to initialize services.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Section
       eyebrow="Admin"
@@ -266,10 +291,19 @@ const AdminServices = () => {
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button to={ROUTES.adminAdvertise} variant="secondary">Go to Advertise</Button>
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
+            <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
             <Button to={`${ROUTES.home}?previewOffer=1`} variant="ghost">Preview Popup</Button>
           </div>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
+            <Button type="button" variant="secondary" onClick={() => seedFromDefaults(false)} disabled={saving}>
+              Initialize Firebase Services
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => seedFromDefaults(true)} disabled={saving}>
+              Reset from Local Defaults
+            </Button>
+          </div>
           <p className="muted" style={{ marginTop: '1rem', marginBottom: 0 }}>
-            Changes here are global and stored on the backend API.
+            Changes here are global and stored in Firebase Firestore.
           </p>
           <p className="muted" style={{ marginTop: '0.75rem' }}>
             <Link to={ROUTES.services}>Open public services page</Link>

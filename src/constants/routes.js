@@ -11,6 +11,7 @@ const ROUTES = {
   adminAdvertise: '/admin/advertise',
   adminServices: '/admin/services',
   adminGallery: '/admin/gallery',
+  adminBlog: '/admin/blog',
 };
 
 export default ROUTES;

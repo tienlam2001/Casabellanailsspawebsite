@@ -24,9 +24,21 @@ const WelcomeOfferPopup = () => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
   const [offerContent, setOfferContent] = useState(() =>
     ({ ...defaultOffer, ...(getFromStorage(OFFER_CONTENT_KEY, {}) || {}) })
   );
+
+  const slides = Array.isArray(offerContent?.slides) && offerContent.slides.length > 0
+    ? offerContent.slides
+    : [offerContent];
+  const slideDurationMsRaw = Number(offerContent?.slideDurationMs);
+  const slideDurationMs =
+    Number.isFinite(slideDurationMsRaw) && slideDurationMsRaw >= 1000 && slideDurationMsRaw <= 60000
+      ? Math.round(slideDurationMsRaw)
+      : 5000;
+  const activeSlide = slides[Math.min(slideIndex, slides.length - 1)] || defaultOffer;
+  const activeImage = activeSlide.imageUrl || offerContent.imageUrl || offerImage;
 
   useEffect(() => {
     const forcePreview =
@@ -45,6 +57,20 @@ const WelcomeOfferPopup = () => {
   }, [location.pathname, location.search]);
 
   useEffect(() => {
+    if (slideIndex > slides.length - 1) {
+      setSlideIndex(0);
+    }
+  }, [slides.length, slideIndex]);
+
+  useEffect(() => {
+    if (!open || slides.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % slides.length);
+    }, slideDurationMs);
+    return () => window.clearInterval(timer);
+  }, [open, slides.length, slideDurationMs]);
+
+  useEffect(() => {
     let mounted = true;
     const loadOffer = async () => {
       try {
@@ -53,15 +79,16 @@ const WelcomeOfferPopup = () => {
         const merged = { ...defaultOffer, ...(offer || {}) };
         setOfferContent(merged);
         saveToStorage(OFFER_CONTENT_KEY, merged);
-      } catch {
+      } catch (err) {
         // Keep local fallback if API is unavailable.
+        console.error('Failed to load popup offer from Firebase:', err);
       }
     };
     loadOffer();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [location.pathname]);
 
   const closePopup = () => {
     if (dontShowAgain) {
@@ -74,18 +101,35 @@ const WelcomeOfferPopup = () => {
     <Modal open={open} onClose={closePopup}>
       <div className="welcome-offer">
         <div className="welcome-offer-media">
-          <img src={offerImage} alt="Elegant manicure offer preview" />
+          <img src={activeImage} alt={activeSlide.title || 'Casabella offer'} />
           <div className="welcome-offer-media-overlay" />
         </div>
         <div className="welcome-offer-body">
           <img className="welcome-offer-logo" src={logo} alt="Casabella Nail and Spa logo" />
-          <div className="welcome-offer-badge">{offerContent.badge}</div>
-          <p className="eyebrow welcome-offer-kicker">{offerContent.kicker}</p>
-          <h2 className="welcome-offer-title">{offerContent.title}</h2>
-          <p className="section-description welcome-offer-copy">{offerContent.message}</p>
+          <div className="welcome-offer-badge">{activeSlide.badge}</div>
+          <p className="eyebrow welcome-offer-kicker">{activeSlide.kicker}</p>
+          <h2 className="welcome-offer-title">{activeSlide.title}</h2>
+          <p className="section-description welcome-offer-copy">{activeSlide.message}</p>
+          {slides.length > 1 ? (
+            <div className="welcome-offer-slides">
+              <button type="button" className="welcome-slide-btn" onClick={() => setSlideIndex((prev) => (prev - 1 + slides.length) % slides.length)}>←</button>
+              <div className="welcome-slide-dots">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`welcome-slide-dot ${idx === slideIndex ? 'active' : ''}`}
+                    onClick={() => setSlideIndex(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+              <button type="button" className="welcome-slide-btn" onClick={() => setSlideIndex((prev) => (prev + 1) % slides.length)}>→</button>
+            </div>
+          ) : null}
           <div className="welcome-offer-actions">
-            <Button to={offerContent.ctaPath} onClick={closePopup}>
-              {offerContent.ctaLabel}
+            <Button to={activeSlide.ctaPath} onClick={closePopup}>
+              {activeSlide.ctaLabel}
             </Button>
             <Button variant="secondary" onClick={closePopup}>
               Maybe later

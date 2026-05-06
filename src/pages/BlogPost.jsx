@@ -4,8 +4,8 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import posts from '../data/posts.json';
 import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import useBlogPosts from '../hooks/useBlogPosts';
 
 const renderContent = (content) => {
   const lines = content.split('\n');
@@ -30,7 +30,8 @@ const renderContent = (content) => {
 
 const BlogPost = () => {
   const { slug } = useParams();
-  const post = useMemo(() => posts.find((item) => item.slug === slug), [slug]);
+  const posts = useBlogPosts();
+  const post = useMemo(() => posts.find((item) => item.slug === slug), [posts, slug]);
 
   useEffect(() => {
     if (post) {

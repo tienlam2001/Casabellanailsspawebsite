@@ -1,4 +1,5 @@
 import {
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
 } from 'firebase/auth';
@@ -12,8 +13,10 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { auth, db, storage } from '../firebase';
 
 const ADMIN_TOKEN_KEY = 'adminAuthToken';
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
@@ -42,6 +45,22 @@ const ensureAdminUser = (user) => {
   if (!allowed) throw new Error('Your account is not allowed as admin.');
 };
 
+const getResolvedAuthUser = async () => {
+  if (auth.currentUser) return auth.currentUser;
+  return new Promise((resolve) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      unsub();
+      resolve(user || null);
+    });
+  });
+};
+
+const ensureAdminUserAsync = async () => {
+  const user = await getResolvedAuthUser();
+  ensureAdminUser(user);
+  return user;
+};
+
 const loginAdmin = async ({ username, email, password }) => {
   const nextEmail = String(email || username || '').trim();
   const credentials = await signInWithEmailAndPassword(auth, nextEmail, password);
@@ -67,7 +86,7 @@ const getWelcomeOffer = async () => {
 };
 
 const updateWelcomeOffer = async (offer) => {
-  ensureAdminUser(auth.currentUser);
+  await ensureAdminUserAsync();
   const payload = {
     ...offer,
     updatedAt: serverTimestamp(),
@@ -91,7 +110,7 @@ const getServices = async () => {
 };
 
 const updateServicePrices = async (updates) => {
-  ensureAdminUser(auth.currentUser);
+  await ensureAdminUserAsync();
   const snapshot = await getDocs(collection(db, 'services'));
   const servicesByKey = new Map();
   for (const item of snapshot.docs) {
@@ -116,7 +135,7 @@ const updateServicePrices = async (updates) => {
 };
 
 const createService = async (service) => {
-  ensureAdminUser(auth.currentUser);
+  await ensureAdminUserAsync();
   const key = `${String(service.name).trim()}::${String(service.category).trim()}`;
   const existing = await getDocs(collection(db, 'services'));
   const exists = existing.docs.some((item) => {
@@ -140,6 +159,52 @@ const createService = async (service) => {
   return getServices();
 };
 
+const seedServicesCollection = async (services, { overwrite = false } = {}) => {
+  await ensureAdminUserAsync();
+  if (!Array.isArray(services) || services.length === 0) {
+    throw new Error('No services provided for seeding.');
+  }
+
+  const existingSnapshot = await getDocs(collection(db, 'services'));
+  if (!overwrite && !existingSnapshot.empty) {
+    return getServices();
+  }
+
+  const batch = writeBatch(db);
+  if (overwrite) {
+    for (const item of existingSnapshot.docs) {
+      batch.delete(doc(db, 'services', item.id));
+    }
+  }
+
+  for (const service of services) {
+    const name = String(service?.name || '').trim();
+    const category = String(service?.category || '').trim();
+    const shortDescription = String(service?.shortDescription || '').trim();
+    const duration = String(service?.duration || '').trim();
+    const priceFrom = Number(service?.priceFrom);
+    if (!name || !category || !shortDescription || !duration || !Number.isFinite(priceFrom)) {
+      continue;
+    }
+
+    const key = `${name}::${category}`;
+    const ref = doc(db, 'services', encodeURIComponent(key));
+    batch.set(ref, {
+      name,
+      shortDescription,
+      duration,
+      category,
+      priceFrom,
+      key,
+      updatedAt: serverTimestamp(),
+      ...(overwrite ? { createdAt: serverTimestamp() } : {}),
+    }, { merge: true });
+  }
+
+  await batch.commit();
+  return getServices();
+};
+
 const normalizeGalleryItem = (id, item) => ({
   id,
   imageUrl: String(item?.imageUrl || '').trim(),
@@ -155,7 +220,7 @@ const getGalleryImages = async () => {
 };
 
 const createGalleryImage = async (payload) => {
-  ensureAdminUser(auth.currentUser);
+  await ensureAdminUserAsync();
   await addDoc(collection(db, 'galleryImages'), {
     imageUrl: String(payload.imageUrl || '').trim(),
     alt: String(payload.alt || '').trim(),
@@ -167,7 +232,7 @@ const createGalleryImage = async (payload) => {
 };
 
 const updateGalleryImage = async (id, payload) => {
-  ensureAdminUser(auth.currentUser);
+  await ensureAdminUserAsync();
   await updateDoc(doc(db, 'galleryImages', id), {
     imageUrl: String(payload.imageUrl || '').trim(),
     alt: String(payload.alt || '').trim(),
@@ -178,9 +243,254 @@ const updateGalleryImage = async (id, payload) => {
 };
 
 const deleteGalleryImage = async (id) => {
-  ensureAdminUser(auth.currentUser);
+  await ensureAdminUserAsync();
   await deleteDoc(doc(db, 'galleryImages', id));
   return getGalleryImages();
+};
+
+const seedGalleryCollection = async (items, { overwrite = false } = {}) => {
+  await ensureAdminUserAsync();
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error('No gallery items provided for seeding.');
+  }
+
+  const existingSnapshot = await getDocs(collection(db, 'galleryImages'));
+  if (!overwrite && !existingSnapshot.empty) {
+    return getGalleryImages();
+  }
+
+  const batch = writeBatch(db);
+  if (overwrite) {
+    for (const item of existingSnapshot.docs) {
+      batch.delete(doc(db, 'galleryImages', item.id));
+    }
+  }
+
+  let index = 0;
+  for (const item of items) {
+    const imageUrl = String(item?.imageUrl || item?.src || '').trim();
+    const alt = String(item?.alt || '').trim();
+    const category = String(item?.category || '').trim();
+    if (!imageUrl || !category) continue;
+
+    const docId = `seed-${String(category).toLowerCase()}-${String(index).padStart(4, '0')}`;
+    index += 1;
+    batch.set(doc(db, 'galleryImages', docId), {
+      imageUrl,
+      alt,
+      category,
+      updatedAt: serverTimestamp(),
+      ...(overwrite ? { createdAt: serverTimestamp() } : {}),
+    }, { merge: true });
+  }
+
+  await batch.commit();
+  return getGalleryImages();
+};
+
+const normalizeBlogPost = (id, item) => ({
+  id,
+  slug: String(item?.slug || '').trim(),
+  title: String(item?.title || '').trim(),
+  date: String(item?.date || '').trim(),
+  excerpt: String(item?.excerpt || '').trim(),
+  content: String(item?.content || '').trim(),
+  tags: Array.isArray(item?.tags)
+    ? item.tags.map((tag) => String(tag).trim()).filter(Boolean)
+    : [],
+});
+
+const getBlogPosts = async () => {
+  const snapshot = await getDocs(collection(db, 'blogPosts'));
+  return snapshot.docs
+    .map((docItem) => normalizeBlogPost(docItem.id, docItem.data()))
+    .filter((item) => item.slug && item.title && item.date);
+};
+
+const createBlogPost = async (payload) => {
+  await ensureAdminUserAsync();
+  const slug = String(payload?.slug || '').trim();
+  if (!slug) throw new Error('Slug is required.');
+  const existing = await getDocs(collection(db, 'blogPosts'));
+  const exists = existing.docs.some((item) => String(item.data()?.slug || '').trim() === slug);
+  if (exists) throw new Error('A blog post with this slug already exists.');
+
+  await addDoc(collection(db, 'blogPosts'), {
+    slug,
+    title: String(payload.title || '').trim(),
+    date: String(payload.date || '').trim(),
+    excerpt: String(payload.excerpt || '').trim(),
+    content: String(payload.content || '').trim(),
+    tags: Array.isArray(payload.tags) ? payload.tags : [],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return getBlogPosts();
+};
+
+const updateBlogPost = async (id, payload) => {
+  await ensureAdminUserAsync();
+  const slug = String(payload?.slug || '').trim();
+  if (!slug) throw new Error('Slug is required.');
+  const existing = await getDocs(collection(db, 'blogPosts'));
+  const exists = existing.docs.some(
+    (item) => item.id !== id && String(item.data()?.slug || '').trim() === slug
+  );
+  if (exists) throw new Error('Another blog post already uses this slug.');
+
+  await updateDoc(doc(db, 'blogPosts', id), {
+    slug,
+    title: String(payload.title || '').trim(),
+    date: String(payload.date || '').trim(),
+    excerpt: String(payload.excerpt || '').trim(),
+    content: String(payload.content || '').trim(),
+    tags: Array.isArray(payload.tags) ? payload.tags : [],
+    updatedAt: serverTimestamp(),
+  });
+  return getBlogPosts();
+};
+
+const deleteBlogPost = async (id) => {
+  await ensureAdminUserAsync();
+  await deleteDoc(doc(db, 'blogPosts', id));
+  return getBlogPosts();
+};
+
+const seedBlogPostsCollection = async (posts, { overwrite = false } = {}) => {
+  await ensureAdminUserAsync();
+  if (!Array.isArray(posts) || posts.length === 0) {
+    throw new Error('No blog posts provided for seeding.');
+  }
+
+  const existing = await getDocs(collection(db, 'blogPosts'));
+  if (!overwrite && !existing.empty) return getBlogPosts();
+
+  const batch = writeBatch(db);
+  if (overwrite) {
+    for (const item of existing.docs) batch.delete(doc(db, 'blogPosts', item.id));
+  }
+
+  let index = 0;
+  for (const post of posts) {
+    const slug = String(post?.slug || '').trim();
+    const title = String(post?.title || '').trim();
+    const date = String(post?.date || '').trim();
+    const excerpt = String(post?.excerpt || '').trim();
+    const content = String(post?.content || '').trim();
+    const tags = Array.isArray(post?.tags)
+      ? post.tags.map((tag) => String(tag).trim()).filter(Boolean)
+      : [];
+    if (!slug || !title || !date || !excerpt || !content) continue;
+
+    const docId = `seed-${String(index).padStart(4, '0')}-${encodeURIComponent(slug)}`;
+    index += 1;
+    batch.set(
+      doc(db, 'blogPosts', docId),
+      {
+        slug,
+        title,
+        date,
+        excerpt,
+        content,
+        tags,
+        updatedAt: serverTimestamp(),
+        ...(overwrite ? { createdAt: serverTimestamp() } : {}),
+      },
+      { merge: true }
+    );
+  }
+
+  await batch.commit();
+  return getBlogPosts();
+};
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Unable to read image file.'));
+    reader.readAsDataURL(file);
+  });
+
+const loadImageElement = (src) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Unable to decode image file.'));
+    img.src = src;
+  });
+
+const canvasToBlob = (canvas, type, quality) =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('Image conversion failed.'));
+          return;
+        }
+        resolve(blob);
+      },
+      type,
+      quality
+    );
+  });
+
+const optimizeImageToWebp = async (file) => {
+  const dataUrl = await fileToDataUrl(file);
+  const image = await loadImageElement(dataUrl);
+  const maxEdge = 1920;
+  const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Unable to process image.');
+  ctx.drawImage(image, 0, 0, width, height);
+
+  const webpBlob = await canvasToBlob(canvas, 'image/webp', 0.82);
+  const fileName = file.name.replace(/\.[^.]+$/, '').replace(/\s+/g, '-').toLowerCase();
+  return new File([webpBlob], `${fileName}.webp`, { type: 'image/webp' });
+};
+
+const uploadGalleryImageFile = async (file, category = 'Nails') => {
+  await ensureAdminUserAsync();
+  if (!(file instanceof File)) {
+    throw new Error('Please choose an image file first.');
+  }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    throw new Error('Only JPG, PNG, and WEBP files are allowed.');
+  }
+
+  const optimizedFile = await optimizeImageToWebp(file);
+  const safeName = optimizedFile.name.replace(/\s+/g, '-').toLowerCase();
+  const path = `gallery/${String(category || 'Nails').toLowerCase()}/${Date.now()}-${safeName}`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, optimizedFile, { contentType: optimizedFile.type });
+  return getDownloadURL(storageRef);
+};
+
+const uploadOfferImageFile = async (file) => {
+  await ensureAdminUserAsync();
+  if (!(file instanceof File)) {
+    throw new Error('Please choose an image file first.');
+  }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    throw new Error('Only JPG, PNG, and WEBP files are allowed.');
+  }
+
+  const optimizedFile = await optimizeImageToWebp(file);
+  const safeName = optimizedFile.name.replace(/\s+/g, '-').toLowerCase();
+  const path = `offers/${Date.now()}-${safeName}`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, optimizedFile, { contentType: optimizedFile.type });
+  return getDownloadURL(storageRef);
 };
 
 export {
@@ -194,8 +504,17 @@ export {
   getServices,
   updateServicePrices,
   createService,
+  seedServicesCollection,
   getGalleryImages,
   createGalleryImage,
   updateGalleryImage,
   deleteGalleryImage,
+  seedGalleryCollection,
+  uploadGalleryImageFile,
+  uploadOfferImageFile,
+  getBlogPosts,
+  createBlogPost,
+  updateBlogPost,
+  deleteBlogPost,
+  seedBlogPostsCollection,
 };

@@ -7,12 +7,15 @@ import Button from '../components/Button';
 import ROUTES from '../constants/routes';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 import { setDocumentTitle, setMetaDescription, setRobotsMeta } from '../utils/seo';
+import { getDefaultGallery } from '../utils/defaultGallery';
 import {
   setAdminToken,
   createGalleryImage,
   deleteGalleryImage,
   getAdminToken,
   getGalleryImages,
+  seedGalleryCollection,
+  uploadGalleryImageFile,
   updateGalleryImage,
 } from '../utils/adminApi';
 
@@ -36,6 +39,7 @@ const AdminGallery = () => {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
@@ -167,6 +171,49 @@ const AdminGallery = () => {
     }
   };
 
+  const onUploadFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setNotice('');
+    setError('');
+    setUploading(true);
+    try {
+      const nextUrl = await withAuthHandling(() =>
+        uploadGalleryImageFile(file, form.category)
+      );
+      if (!nextUrl) return;
+      setForm((prev) => ({ ...prev, imageUrl: nextUrl }));
+      if (!String(form.alt || '').trim()) {
+        const filename = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        setForm((prev) => ({ ...prev, alt: filename }));
+      }
+      setNotice('Upload complete. Now click Add Image to save it in gallery.');
+    } catch (err) {
+      setError(err.message || 'Unable to upload file.');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const seedFromDefaults = async (overwrite = false) => {
+    setNotice('');
+    setError('');
+    setSaving(true);
+    try {
+      const nextItems = await withAuthHandling(() =>
+        seedGalleryCollection(getDefaultGallery(), { overwrite })
+      );
+      if (!nextItems) return;
+      setItems(nextItems);
+      setNotice(overwrite ? 'Gallery reset from local defaults.' : 'Firebase gallery initialized from local defaults.');
+    } catch (err) {
+      setError(err.message || 'Unable to initialize gallery.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Section
       eyebrow="Admin"
@@ -183,6 +230,19 @@ const AdminGallery = () => {
                 placeholder="https://..."
               />
             </FormField>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <label className="btn btn-secondary" style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1 }}>
+                {uploading ? 'Uploading...' : 'Upload Image File'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={onUploadFile}
+                  disabled={uploading || saving}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              <p className="muted" style={{ margin: 0 }}>Upload JPG, PNG, or WEBP to Firebase Storage.</p>
+            </div>
             <FormField label="Alt text" required>
               <FormField.Input
                 value={form.alt}
@@ -225,6 +285,15 @@ const AdminGallery = () => {
             <Button to={ROUTES.adminAdvertise} variant="secondary">Go to Advertise</Button>
             <Button to={ROUTES.adminServices} variant="secondary">Go to Services Pricing</Button>
             <Button to={ROUTES.gallery} variant="ghost">Open Public Gallery</Button>
+            <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
+          </div>
+          <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Button type="button" variant="secondary" onClick={() => seedFromDefaults(false)} disabled={saving}>
+              Initialize Firebase Gallery
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => seedFromDefaults(true)} disabled={saving}>
+              Reset from Local Defaults
+            </Button>
           </div>
           <p className="muted" style={{ marginTop: '1rem', marginBottom: 0 }}>
             Images are stored in Firestore collection <code>galleryImages</code>.
