@@ -20,6 +20,16 @@ const defaultOffer = {
   ctaPath: ROUTES.services,
 };
 
+const normalizeSlide = (slide, fallback) => ({
+  badge: slide?.badge || fallback.badge || defaultOffer.badge,
+  kicker: slide?.kicker || fallback.kicker || defaultOffer.kicker,
+  title: slide?.title || fallback.title || defaultOffer.title,
+  message: slide?.message || fallback.message || defaultOffer.message,
+  ctaLabel: slide?.ctaLabel || fallback.ctaLabel || defaultOffer.ctaLabel,
+  ctaPath: slide?.ctaPath || fallback.ctaPath || defaultOffer.ctaPath,
+  imageUrl: slide?.imageUrl || '',
+});
+
 const WelcomeOfferPopup = () => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -30,8 +40,8 @@ const WelcomeOfferPopup = () => {
   );
 
   const slides = Array.isArray(offerContent?.slides) && offerContent.slides.length > 0
-    ? offerContent.slides
-    : [offerContent];
+    ? offerContent.slides.map((slide) => normalizeSlide(slide, offerContent))
+    : [normalizeSlide(offerContent, offerContent)];
   const slideDurationMsRaw = Number(offerContent?.slideDurationMs);
   const slideDurationMs =
     Number.isFinite(slideDurationMsRaw) && slideDurationMsRaw >= 1000 && slideDurationMsRaw <= 60000
@@ -64,11 +74,11 @@ const WelcomeOfferPopup = () => {
 
   useEffect(() => {
     if (!open || slides.length < 2) return undefined;
-    const timer = window.setInterval(() => {
+    const timer = window.setTimeout(() => {
       setSlideIndex((prev) => (prev + 1) % slides.length);
     }, slideDurationMs);
-    return () => window.clearInterval(timer);
-  }, [open, slides.length, slideDurationMs]);
+    return () => window.clearTimeout(timer);
+  }, [open, slides.length, slideDurationMs, slideIndex]);
 
   useEffect(() => {
     let mounted = true;

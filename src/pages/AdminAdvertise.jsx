@@ -25,6 +25,16 @@ const defaultContent = {
   slideDurationMs: 5000,
 };
 
+const normalizeSlide = (slide, fallback = defaultContent) => ({
+  badge: String(slide?.badge || fallback.badge || '').trim(),
+  kicker: String(slide?.kicker || fallback.kicker || '').trim(),
+  title: String(slide?.title || '').trim(),
+  message: String(slide?.message || '').trim(),
+  ctaLabel: String(slide?.ctaLabel || fallback.ctaLabel || '').trim(),
+  ctaPath: String(slide?.ctaPath || fallback.ctaPath || '').trim(),
+  imageUrl: String(slide?.imageUrl || '').trim(),
+});
+
 const AdminAdvertise = () => {
   const navigate = useNavigate();
   const session = getFromStorage(ADMIN_SESSION_KEY, null);
@@ -44,6 +54,12 @@ const AdminAdvertise = () => {
   const [notice, setNotice] = useState('');
   const [errors, setErrors] = useState({});
   const [uploading, setUploading] = useState(false);
+  const [uploadingSlideIndex, setUploadingSlideIndex] = useState(-1);
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
+  const [slidesEditor, setSlidesEditor] = useState(() => {
+    const parsed = Array.isArray(storedContent?.slides) ? storedContent.slides : [];
+    return parsed.map((slide) => normalizeSlide(slide, storedContent));
+  });
 
   useEffect(() => {
     setDocumentTitle('Admin Advertise');
@@ -74,18 +90,9 @@ const AdminAdvertise = () => {
     if (!Number.isFinite(rawDuration) || rawDuration < 1000 || rawDuration > 60000) {
       nextErrors.slideDurationMs = 'Duration must be between 1000 and 60000 ms.';
     }
-    let parsedSlides = [];
-    const slidesRaw = String(form.slidesJson || '').trim();
-    if (slidesRaw) {
-      try {
-        parsedSlides = JSON.parse(slidesRaw);
-        if (!Array.isArray(parsedSlides)) {
-          nextErrors.slidesJson = 'Slides JSON must be an array.';
-        }
-      } catch {
-        nextErrors.slidesJson = 'Slides JSON is not valid.';
-      }
-    }
+    const parsedSlides = slidesEditor
+      .map((slide) => normalizeSlide(slide, form))
+      .filter((slide) => isNotEmpty(slide.title) && isNotEmpty(slide.message));
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -110,6 +117,7 @@ const AdminAdvertise = () => {
       };
       const saved = await updateWelcomeOffer(payload);
       setForm((prev) => ({ ...prev, slidesJson: JSON.stringify(parsedSlides, null, 2) }));
+      setSlidesEditor(parsedSlides.map((slide) => normalizeSlide(slide, form)));
       saveToStorage(OFFER_CONTENT_KEY, saved);
       setNotice('Saved. Refresh with ?previewOffer=1 to preview popup immediately.');
     } catch (err) {
@@ -146,11 +154,63 @@ const AdminAdvertise = () => {
     }
   };
 
+  const onSlideFieldChange = (index, field, value) => {
+    setSlidesEditor((prev) => prev.map((slide, idx) => (
+      idx === index ? { ...slide, [field]: value } : slide
+    )));
+    setNotice('');
+  };
+
+  const onAddSlide = () => {
+    setSlidesEditor((prev) => ([
+      ...prev,
+      normalizeSlide({ title: 'New offer title', message: 'Add your offer details here.' }, form),
+    ]));
+    setActivePreviewIndex(slidesEditor.length);
+    setNotice('');
+  };
+
+  const onDeleteSlide = (index) => {
+    setSlidesEditor((prev) => prev.filter((_, idx) => idx !== index));
+    setActivePreviewIndex((prev) => (prev > 0 ? prev - 1 : 0));
+    setNotice('');
+  };
+
+  const onUploadSlideImage = async (index, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setNotice('');
+    setUploadingSlideIndex(index);
+    try {
+      const token = getAdminToken();
+      if (!token) {
+        setNotice('Your admin session expired. Please log in again.');
+        navigate(ROUTES.adminLogin, { replace: true });
+        return;
+      }
+      const url = await uploadOfferImageFile(file);
+      onSlideFieldChange(index, 'imageUrl', url);
+      setNotice('Slide image uploaded. Click Save Changes to publish.');
+    } catch (err) {
+      setNotice(err.message || 'Unable to upload slide image.');
+    } finally {
+      setUploadingSlideIndex(-1);
+      event.target.value = '';
+    }
+  };
+
   const onReset = () => {
     setForm(defaultContent);
+    setSlidesEditor([]);
+    setActivePreviewIndex(0);
     setErrors({});
     setNotice('Defaults restored in form. Click Save to publish.');
   };
+
+  const previewSlides = slidesEditor.length > 0
+    ? slidesEditor
+    : [{ ...normalizeSlide(form, form), title: form.title, message: form.message, imageUrl: form.imageUrl }];
+  const previewSlide = previewSlides[Math.min(activePreviewIndex, previewSlides.length - 1)];
 
   const onLogout = () => {
     setAdminToken(null);
@@ -200,15 +260,49 @@ const AdminAdvertise = () => {
               </label>
               <p className="muted" style={{ margin: 0 }}>Auto-converts to WebP and uploads to Firebase Storage.</p>
             </div>
-            <FormField label="Slides JSON" error={errors.slidesJson} helper="Optional: array of slides with title/message/cta/imageUrl">
-              <FormField.TextArea
-                name="slidesJson"
-                rows={8}
-                value={form.slidesJson || ''}
-                onChange={onChange}
-                placeholder={'[{"title":"Offer 1","message":"...","ctaLabel":"Book","ctaPath":"/booking","imageUrl":"https://..."}]'}
-              />
-            </FormField>
+            <div className="popup-editor-header">
+              <p className="eyebrow" style={{ margin: 0 }}>Slides</p>
+              <button type="button" className="popup-editor-add-btn" onClick={onAddSlide}>+ Add Slide</button>
+            </div>
+            <div className="popup-slides-editor">
+              {slidesEditor.length === 0 ? (
+                <p className="muted" style={{ margin: 0 }}>No slides yet. Click + Add Slide to create digital signage slides.</p>
+              ) : slidesEditor.map((slide, index) => (
+                <div key={`${slide.title}-${index}`} className="popup-slide-item">
+                  <div className="popup-slide-item-top">
+                    <strong>Slide {index + 1}</strong>
+                    <button type="button" className="popup-slide-delete-btn" onClick={() => onDeleteSlide(index)}>×</button>
+                  </div>
+                  <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))' }}>
+                    <FormField label="Title">
+                      <FormField.Input value={slide.title} onChange={(e) => onSlideFieldChange(index, 'title', e.target.value)} />
+                    </FormField>
+                    <FormField label="Message">
+                      <FormField.Input value={slide.message} onChange={(e) => onSlideFieldChange(index, 'message', e.target.value)} />
+                    </FormField>
+                    <FormField label="Image URL">
+                      <FormField.Input value={slide.imageUrl || ''} onChange={(e) => onSlideFieldChange(index, 'imageUrl', e.target.value)} placeholder="https://..." />
+                    </FormField>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    <label className="btn btn-secondary" style={{ cursor: uploadingSlideIndex === index ? 'not-allowed' : 'pointer', opacity: uploadingSlideIndex === index ? 0.7 : 1 }}>
+                      {uploadingSlideIndex === index ? 'Uploading...' : 'Upload Slide Photo'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => onUploadSlideImage(index, e)}
+                        disabled={uploadingSlideIndex === index}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    <button type="button" className="btn btn-ghost" onClick={() => setActivePreviewIndex(index)}>Preview</button>
+                  </div>
+                  {slide.imageUrl ? (
+                    <img className="popup-slide-thumb" src={slide.imageUrl} alt={`Slide ${index + 1} preview`} />
+                  ) : null}
+                </div>
+              ))}
+            </div>
             <FormField label="Slide Duration (ms)" error={errors.slideDurationMs} helper="Used for auto-slide when there are 2+ slides.">
               <FormField.Input
                 name="slideDurationMs"
@@ -241,7 +335,30 @@ const AdminAdvertise = () => {
 
         <Card>
           <p className="eyebrow" style={{ marginBottom: '0.35rem' }}>How to use</p>
-          <h3 className="section-title" style={{ margin: 0, fontSize: '1.4rem' }}>Publish and preview quickly</h3>
+          <h3 className="section-title" style={{ margin: 0, fontSize: '1.4rem' }}>Live Popup Preview</h3>
+          <div className="popup-preview-card">
+            {previewSlide?.imageUrl ? <img src={previewSlide.imageUrl} alt={previewSlide.title || 'Popup preview'} /> : null}
+            <div className="popup-preview-content">
+              <p className="eyebrow" style={{ marginBottom: '0.35rem' }}>{previewSlide?.kicker || form.kicker}</p>
+              <h4>{previewSlide?.title || form.title}</h4>
+              <p>{previewSlide?.message || form.message}</p>
+              <p className="muted" style={{ marginBottom: 0 }}>Duration: {Math.round(Number(form.slideDurationMs || 5000) / 1000)}s</p>
+            </div>
+          </div>
+          {previewSlides.length > 1 ? (
+            <div className="popup-preview-dots">
+              {previewSlides.map((_, index) => (
+                <button
+                  key={`preview-dot-${index}`}
+                  type="button"
+                  className={`welcome-slide-dot ${index === activePreviewIndex ? 'active' : ''}`}
+                  onClick={() => setActivePreviewIndex(index)}
+                  aria-label={`Preview slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          ) : null}
+          <h3 className="section-title" style={{ margin: '1rem 0 0', fontSize: '1.2rem' }}>Publish and preview quickly</h3>
           <ol style={{ marginTop: '0.8rem', color: 'rgba(31,41,51,0.9)', lineHeight: 1.6, paddingLeft: '1.2rem' }}>
             <li>Update the popup text fields.</li>
             <li>Click Save Changes.</li>
