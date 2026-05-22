@@ -19,11 +19,6 @@ import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
 
 const ADMIN_TOKEN_KEY = 'adminAuthToken';
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
-  .split(',')
-  .map((email) => email.trim().toLowerCase())
-  .filter(Boolean);
-
 const getAdminToken = () => {
   if (typeof window === 'undefined') return null;
   return window.localStorage.getItem(ADMIN_TOKEN_KEY);
@@ -40,9 +35,6 @@ const setAdminToken = (token) => {
 
 const ensureAdminUser = (user) => {
   if (!user?.email) throw new Error('Please sign in.');
-  if (ADMIN_EMAILS.length === 0) return;
-  const allowed = ADMIN_EMAILS.includes(user.email.toLowerCase());
-  if (!allowed) throw new Error('Your account is not allowed as admin.');
 };
 
 const getResolvedAuthUser = async () => {

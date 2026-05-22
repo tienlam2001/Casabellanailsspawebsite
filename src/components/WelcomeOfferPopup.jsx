@@ -20,13 +20,18 @@ const defaultOffer = {
   ctaPath: ROUTES.services,
 };
 
+const safePath = (value, fallback) => {
+  const s = String(value || '').trim();
+  return s.startsWith('/') ? s : fallback;
+};
+
 const normalizeSlide = (slide, fallback) => ({
   badge: slide?.badge || fallback.badge || defaultOffer.badge,
   kicker: slide?.kicker || fallback.kicker || defaultOffer.kicker,
   title: slide?.title || fallback.title || defaultOffer.title,
   message: slide?.message || fallback.message || defaultOffer.message,
   ctaLabel: slide?.ctaLabel || fallback.ctaLabel || defaultOffer.ctaLabel,
-  ctaPath: slide?.ctaPath || fallback.ctaPath || defaultOffer.ctaPath,
+  ctaPath: safePath(slide?.ctaPath || fallback.ctaPath, defaultOffer.ctaPath),
   imageUrl: slide?.imageUrl || '',
 });
 

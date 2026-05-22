@@ -1,5 +1,4 @@
 import { createServer } from 'node:http';
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,12 +9,7 @@ const OFFER_FILE = resolve(DATA_DIR, 'offer.json');
 const SERVICES_FILE = resolve(DATA_DIR, 'services.json');
 const SOURCE_SERVICES_FILE = resolve(__dirname, '..', 'src', 'data', 'services.json');
 const PORT = Number(process.env.ADMIN_API_PORT || 8787);
-const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'casabella123';
-const AUTH_SECRET = process.env.AUTH_SECRET || 'change-this-secret-in-production';
 const ALLOWED_ORIGIN = process.env.ADMIN_ALLOWED_ORIGIN || '*';
-const LOGIN_RATE_WINDOW_MS = Number(process.env.LOGIN_RATE_WINDOW_MS || 10 * 60 * 1000);
-const LOGIN_RATE_MAX_ATTEMPTS = Number(process.env.LOGIN_RATE_MAX_ATTEMPTS || 10);
 
 const defaultOffer = {
   badge: 'Limited-time perks',
@@ -24,16 +18,6 @@ const defaultOffer = {
   message: 'Check back often for fresh promotions on your favorite nail and spa treatments.',
   ctaLabel: 'View Offers',
   ctaPath: '/services',
-};
-
-const loginAttempts = new Map();
-
-const getClientIp = (req) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.socket?.remoteAddress || 'unknown';
 };
 
 const isOriginAllowed = (origin) => {
@@ -67,19 +51,6 @@ const json = (req, res, status, payload) => {
     'Cache-Control': 'no-store',
   });
   res.end(JSON.stringify(payload));
-};
-
-const isRateLimited = (ip) => {
-  const now = Date.now();
-  const bucket = loginAttempts.get(ip);
-  if (!bucket || now > bucket.resetAt) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_RATE_WINDOW_MS });
-    return false;
-  }
-  if (bucket.count >= LOGIN_RATE_MAX_ATTEMPTS) return true;
-  bucket.count += 1;
-  loginAttempts.set(ip, bucket);
-  return false;
 };
 
 const readBody = async (req) => {
@@ -130,33 +101,6 @@ const saveServices = (services) => {
   writeFileSync(SERVICES_FILE, JSON.stringify(services, null, 2));
 };
 
-const sign = (value) => createHmac('sha256', AUTH_SECRET).update(value).digest('hex');
-
-const issueToken = (username) => {
-  const expiresAt = Date.now() + 1000 * 60 * 60 * 12;
-  const payload = `${username}.${expiresAt}`;
-  const sig = sign(payload);
-  return `${payload}.${sig}`;
-};
-
-const verifyToken = (token) => {
-  if (!token || typeof token !== 'string') return false;
-  const parts = token.split('.');
-  if (parts.length !== 3) return false;
-  const [username, expiresRaw, sig] = parts;
-  const payload = `${username}.${expiresRaw}`;
-  const expected = sign(payload);
-
-  const sigBuf = Buffer.from(sig);
-  const expectedBuf = Buffer.from(expected);
-  if (sigBuf.length !== expectedBuf.length) return false;
-  if (!timingSafeEqual(sigBuf, expectedBuf)) return false;
-
-  const expiresAt = Number(expiresRaw);
-  if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
-  return username === ADMIN_USER;
-};
-
 const isValidOffer = (candidate) => {
   const keys = ['badge', 'kicker', 'title', 'message', 'ctaLabel', 'ctaPath'];
   return keys.every((key) => typeof candidate?.[key] === 'string' && candidate[key].trim().length > 0);
@@ -187,22 +131,6 @@ const server = createServer(async (req, res) => {
       return json(req, res, 200, { ok: true });
     }
 
-    if (req.method === 'POST' && url.pathname === '/api/admin/login') {
-      const ip = getClientIp(req);
-      if (isRateLimited(ip)) {
-        return json(req, res, 429, { error: 'Too many login attempts. Try again later.' });
-      }
-      const body = await readBody(req);
-      const username = String(body?.username || '').trim();
-      const password = String(body?.password || '');
-      if (username !== ADMIN_USER || password !== ADMIN_PASSWORD) {
-        return json(req, res, 401, { error: 'Invalid credentials' });
-      }
-      const token = issueToken(username);
-      loginAttempts.delete(ip);
-      return json(req, res, 200, { token, username, expiresInHours: 12 });
-    }
-
     if (req.method === 'GET' && url.pathname === '/api/offers/welcome') {
       return json(req, res, 200, { offer: loadOffer() });
     }
@@ -212,10 +140,6 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'PUT' && url.pathname === '/api/admin/offers/welcome') {
-      const authHeader = req.headers.authorization || '';
-      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-      if (!verifyToken(token)) return json(req, res, 401, { error: 'Unauthorized' });
-
       const body = await readBody(req);
       const offer = body?.offer;
       if (!isValidOffer(offer)) return json(req, res, 400, { error: 'Invalid offer payload' });
@@ -233,10 +157,6 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'PUT' && url.pathname === '/api/admin/services/prices') {
-      const authHeader = req.headers.authorization || '';
-      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-      if (!verifyToken(token)) return json(req, res, 401, { error: 'Unauthorized' });
-
       const body = await readBody(req);
       const updates = body?.updates;
       if (!Array.isArray(updates) || updates.length === 0) {
@@ -272,10 +192,6 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/admin/services') {
-      const authHeader = req.headers.authorization || '';
-      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-      if (!verifyToken(token)) return json(req, res, 401, { error: 'Unauthorized' });
-
       const body = await readBody(req);
       const service = body?.service;
       if (
