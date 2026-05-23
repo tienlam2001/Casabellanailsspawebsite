@@ -4,15 +4,20 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import ROUTES from '../constants/routes';
-import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import { getGalleryImages } from '../utils/adminApi';
 
 import { getDefaultGallery } from '../utils/defaultGallery';
 
 const Gallery = () => {
   useEffect(() => {
-    setDocumentTitle('Gallery');
-    setMetaDescription('View the Casabella Nail & Spa gallery featuring nail art, spa pedicures, and calming moments from our Oviedo, Florida studio.');
+    setPageSeo({
+      title: 'Nail Gallery in Oviedo, FL',
+      description:
+        'View Casabella Nail & Spa photos featuring Oviedo manicures, nail art, acrylic nails, dip powder, Gel-X, spa pedicures, and salon details.',
+      path: ROUTES.gallery,
+    });
+    setLocalBusinessJsonLd();
   }, []);
 
   const [filter, setFilter] = useState('All');
@@ -64,8 +69,8 @@ const Gallery = () => {
     <div>
       <Section
         eyebrow="Gallery"
-        title="A calm, polished aesthetic"
-        description="Browse recent manicures, spa details, and before/after transformations from guests across Oviedo, Florida."
+        title="Nail gallery from our Oviedo, FL salon"
+        description="Browse recent manicures, acrylic nails, dip powder, Gel-X, spa pedicures, and before/after transformations from guests across Oviedo, Florida."
       >
         {/* Top controls */}
         <div className="gallery-controls">

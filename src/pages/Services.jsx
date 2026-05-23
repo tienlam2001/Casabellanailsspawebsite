@@ -3,7 +3,7 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { setLocalBusinessJsonLd, setPageSeo, setServiceCatalogJsonLd } from '../utils/seo';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 import staticServices from '../data/services.json';
 import {
@@ -41,8 +41,14 @@ const Services = () => {
   const isAdmin = Boolean(adminSession?.loggedIn && getAdminToken());
 
   useEffect(() => {
-    setDocumentTitle('Services');
-    setMetaDescription('Explore manicure, pedicure, and spa services at Casabella Nail & Spa in Oviedo, Florida, including gel, dip, and relaxing add-ons.');
+    setPageSeo({
+      title: 'Nail Services in Oviedo, FL',
+      description:
+        'Explore Oviedo, FL nail services at Casabella Nail & Spa: manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and kids services.',
+      path: ROUTES.services,
+    });
+    setLocalBusinessJsonLd();
+    setServiceCatalogJsonLd(staticServices);
   }, []);
 
   useEffect(() => {
@@ -227,8 +233,8 @@ const Services = () => {
     <div>
       <Section
         eyebrow="Services Menu"
-        title="Meticulous nail care and spa rituals"
-        description="Every appointment is customized. Pricing varies by finish and art level; request a consultation for bespoke looks."
+        title="Nail services in Oviedo, FL"
+        description="Every appointment is customized at Casabella Nail & Spa in Oviedo. Choose manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X extensions, nail art, waxing, and more."
       >
         <div className="services-toolbar reveal reveal-delay-1">
           <div className="services-filters">
@@ -347,9 +353,9 @@ const Services = () => {
         <div className="card services-cta">
           <div className="muted">
             <p className="eyebrow" style={{ marginBottom: '0.35rem' }}>
-              Easy to book
+              Oviedo appointments
             </p>
-            <p>Choose your service list, then add preferences during booking notes.</p>
+            <p>Choose your service list, then add preferences during booking notes. We serve Oviedo, Winter Springs, Chuluota, Geneva, Orlando, and nearby Seminole County communities.</p>
           </div>
           <Button to={ROUTES.bookingExternal}>Request Booking</Button>
         </div>

@@ -6,7 +6,7 @@ import Button from '../components/Button';
 import ROUTES from '../constants/routes';
 import { appendToStorage } from '../utils/storage';
 import { validateContact } from '../utils/validators';
-import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 
 const initialForm = {
   fullName: '',
@@ -17,8 +17,13 @@ const initialForm = {
 
 const Contact = () => {
   useEffect(() => {
-    setDocumentTitle('Contact');
-    setMetaDescription('Contact Casabella Nail & Spa in Oviedo, Florida for appointments, questions, or spa recommendations.');
+    setPageSeo({
+      title: 'Contact Oviedo Nail Salon',
+      description:
+        'Contact Casabella Nail & Spa at 2871 Clayton Crossing Way #1033, Oviedo, FL 32765 for manicure, pedicure, nail art, waxing, and spa appointments.',
+      path: ROUTES.contact,
+    });
+    setLocalBusinessJsonLd();
   }, []);
 
   const [form, setForm] = useState(initialForm);
@@ -51,8 +56,8 @@ const Contact = () => {
     <div>
       <Section
         eyebrow="Contact"
-        title="We are here to help"
-        description="Call, email, or send a note. The Casabella team in Oviedo, Florida will respond promptly during business hours."
+        title="Contact Casabella Nail & Spa in Oviedo, FL"
+        description="Call, email, or send a note to our nail salon at 2871 Clayton Crossing Way #1033, Oviedo, FL 32765. The Casabella team responds during business hours."
       >
         <div className="grid-2" style={{ gap: '1.5rem' }}>
           <Card>

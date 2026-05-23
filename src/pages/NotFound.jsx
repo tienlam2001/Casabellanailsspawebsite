@@ -3,12 +3,16 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { setPageSeo } from '../utils/seo';
 
 const NotFound = () => {
   useEffect(() => {
-    setDocumentTitle('Page not found');
-    setMetaDescription('The page you are looking for is unavailable. Return to Casabella Nail & Spa in Oviedo, Florida.');
+    setPageSeo({
+      title: 'Page not found',
+      description:
+        'The page you are looking for is unavailable. Return to Casabella Nail & Spa in Oviedo, Florida.',
+      robots: 'noindex, follow',
+    });
   }, []);
 
   return (

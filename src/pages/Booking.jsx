@@ -7,7 +7,7 @@ import ROUTES from '../constants/routes';
 import services from '../data/services.json';
 import { appendToStorage } from '../utils/storage';
 import { validateBooking } from '../utils/validators';
-import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 
 const initialForm = {
   fullName: '',
@@ -21,10 +21,13 @@ const initialForm = {
 
 const Booking = () => {
   useEffect(() => {
-    setDocumentTitle('Booking');
-    setMetaDescription(
-      'Book a manicure, pedicure, or spa service at Casabella Nail & Spa in Oviedo, Florida. Request your preferred time and we will confirm quickly.'
-    );
+    setPageSeo({
+      title: 'Book Nail Appointment in Oviedo, FL',
+      description:
+        'Book a manicure, pedicure, acrylic, dip powder, Gel-X, waxing, or spa service at Casabella Nail & Spa in Oviedo, FL. Request your preferred appointment time.',
+      path: ROUTES.booking,
+    });
+    setLocalBusinessJsonLd();
   }, []);
 
   const categories = useMemo(
@@ -66,8 +69,8 @@ const Booking = () => {
     <div>
       <Section
         eyebrow="Booking"
-        title="Request your visit"
-        description="Tell us when you would like to visit our Oviedo studio and which service you prefer. We confirm quickly with a clean, prepared station."
+        title="Book a nail appointment in Oviedo, FL"
+        description="Tell us when you would like to visit our Oviedo nail salon and which service you prefer. We confirm quickly with a clean, prepared station."
       >
         <div className="grid-2" style={{ gap: '1.5rem' }}>
           <Card>

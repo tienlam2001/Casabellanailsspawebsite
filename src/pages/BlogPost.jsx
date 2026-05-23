@@ -4,7 +4,7 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import useBlogPosts from '../hooks/useBlogPosts';
 
 const renderContent = (content) => {
@@ -35,12 +35,22 @@ const BlogPost = () => {
 
   useEffect(() => {
     if (post) {
-      setDocumentTitle(post.title);
-      setMetaDescription(post.excerpt);
+      setPageSeo({
+        title: post.title,
+        description: post.excerpt,
+        path: `${ROUTES.blog}/${post.slug}`,
+      });
+      setLocalBusinessJsonLd();
     } else {
-      setDocumentTitle('Post not found');
+      setPageSeo({
+        title: 'Post not found',
+        description:
+          'Browse Casabella Nail & Spa articles for Oviedo nail care, manicure, pedicure, and spa guidance.',
+        path: `${ROUTES.blog}/${slug || ''}`,
+        robots: 'noindex, follow',
+      });
     }
-  }, [post]);
+  }, [post, slug]);
 
   if (!post) {
     return (

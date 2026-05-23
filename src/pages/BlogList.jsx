@@ -4,15 +4,20 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import { setDocumentTitle, setMetaDescription } from '../utils/seo';
+import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import useBlogPosts from '../hooks/useBlogPosts';
 
 const BlogList = () => {
   const postsData = useBlogPosts();
 
   useEffect(() => {
-    setDocumentTitle('Blog');
-    setMetaDescription('Read the Casabella Nail & Spa journal for nail care tips, spa rituals, and Oviedo, Florida spotlights.');
+    setPageSeo({
+      title: 'Oviedo Nail Care Blog',
+      description:
+        'Read Casabella Nail & Spa tips for nail care, manicures, pedicures, spa rituals, hygiene, and local Oviedo, Florida salon updates.',
+      path: ROUTES.blog,
+    });
+    setLocalBusinessJsonLd();
   }, []);
 
   const posts = useMemo(
@@ -27,8 +32,8 @@ const BlogList = () => {
     <div>
       <Section
         eyebrow="Journal"
-        title="Thoughtful nail care and spa guidance"
-        description="Tips from Oviedo&apos;s calmest nail studio—designed to keep your manicure immaculate and your spa days restorative."
+        title="Oviedo nail care and spa guidance"
+        description="Tips from our Oviedo, FL nail salon designed to keep your manicure immaculate and your spa days restorative."
       >
         <div className="grid-2" style={{ alignItems: 'start', gap: '1.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
