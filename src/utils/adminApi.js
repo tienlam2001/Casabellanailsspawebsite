@@ -348,6 +348,62 @@ const deleteBlogPost = async (id) => {
   return getBlogPosts();
 };
 
+const normalizePromotion = (id, item) => ({
+  id,
+  title: String(item?.title || '').trim(),
+  description: String(item?.description || '').trim(),
+  offer: String(item?.offer || '').trim(),
+  startDate: String(item?.startDate || '').trim(),
+  endDate: String(item?.endDate || '').trim(),
+  business: String(item?.business || '').trim(),
+  imageUrl: String(item?.imageUrl || '').trim(),
+  isActive: item?.isActive !== false,
+});
+
+const getPromotions = async () => {
+  const snapshot = await getDocs(collection(db, 'promotions'));
+  return snapshot.docs
+    .map((docItem) => normalizePromotion(docItem.id, docItem.data()))
+    .filter((item) => item.title && item.description && item.startDate && item.endDate)
+    .sort((a, b) => b.startDate.localeCompare(a.startDate));
+};
+
+const promotionPayload = (payload) => ({
+  title: String(payload?.title || '').trim(),
+  description: String(payload?.description || '').trim(),
+  offer: String(payload?.offer || '').trim(),
+  startDate: String(payload?.startDate || '').trim(),
+  endDate: String(payload?.endDate || '').trim(),
+  business: String(payload?.business || '').trim(),
+  imageUrl: String(payload?.imageUrl || '').trim(),
+  isActive: payload?.isActive !== false,
+});
+
+const createPromotion = async (payload) => {
+  await ensureAdminUserAsync();
+  await addDoc(collection(db, 'promotions'), {
+    ...promotionPayload(payload),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return getPromotions();
+};
+
+const updatePromotion = async (id, payload) => {
+  await ensureAdminUserAsync();
+  await updateDoc(doc(db, 'promotions', id), {
+    ...promotionPayload(payload),
+    updatedAt: serverTimestamp(),
+  });
+  return getPromotions();
+};
+
+const deletePromotion = async (id) => {
+  await ensureAdminUserAsync();
+  await deleteDoc(doc(db, 'promotions', id));
+  return getPromotions();
+};
+
 const seedBlogPostsCollection = async (posts, { overwrite = false } = {}) => {
   await ensureAdminUserAsync();
   if (!Array.isArray(posts) || posts.length === 0) {
@@ -485,6 +541,25 @@ const uploadOfferImageFile = async (file) => {
   return getDownloadURL(storageRef);
 };
 
+const uploadPromotionImageFile = async (file) => {
+  await ensureAdminUserAsync();
+  if (!(file instanceof File)) {
+    throw new Error('Please choose an image file first.');
+  }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    throw new Error('Only JPG, PNG, and WEBP files are allowed.');
+  }
+
+  const optimizedFile = await optimizeImageToWebp(file);
+  const safeName = optimizedFile.name.replace(/\s+/g, '-').toLowerCase();
+  const path = `promotions/${Date.now()}-${safeName}`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, optimizedFile, { contentType: optimizedFile.type });
+  return getDownloadURL(storageRef);
+};
+
 export {
   ADMIN_TOKEN_KEY,
   getAdminToken,
@@ -504,6 +579,11 @@ export {
   seedGalleryCollection,
   uploadGalleryImageFile,
   uploadOfferImageFile,
+  getPromotions,
+  createPromotion,
+  updatePromotion,
+  deletePromotion,
+  uploadPromotionImageFile,
   getBlogPosts,
   createBlogPost,
   updateBlogPost,

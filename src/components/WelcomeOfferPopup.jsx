@@ -16,8 +16,8 @@ const defaultOffer = {
   kicker: 'Welcome to Casabella',
   title: 'New offers every week',
   message: 'Check back often for fresh promotions on your favorite nail and spa treatments.',
-  ctaLabel: 'View Offers',
-  ctaPath: ROUTES.services,
+  ctaLabel: 'View More Details',
+  ctaPath: ROUTES.promotions,
 };
 
 const safePath = (value, fallback) => {
@@ -37,7 +37,7 @@ const normalizeSlide = (slide, fallback) => ({
 
 const WelcomeOfferPopup = () => {
   const location = useLocation();
-  const [open, setOpen] = useState(false);
+  const [dismissedForSession, setDismissedForSession] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const [offerContent, setOfferContent] = useState(() =>
@@ -52,30 +52,15 @@ const WelcomeOfferPopup = () => {
     Number.isFinite(slideDurationMsRaw) && slideDurationMsRaw >= 1000 && slideDurationMsRaw <= 60000
       ? Math.round(slideDurationMsRaw)
       : 5000;
-  const activeSlide = slides[Math.min(slideIndex, slides.length - 1)] || defaultOffer;
+  const activeSlideIndex = Math.min(slideIndex, slides.length - 1);
+  const activeSlide = slides[activeSlideIndex] || defaultOffer;
   const activeImage = activeSlide.imageUrl || offerContent.imageUrl || offerImage;
-
-  useEffect(() => {
-    const forcePreview =
-      typeof window !== 'undefined' &&
-      (new URLSearchParams(window.location.search).get('previewOffer') === '1' ||
-        new URLSearchParams(window.location.search).get('showOffer') === '1');
-
-    const dismissed = getFromStorage(DISMISS_KEY, false);
-    const isHome = location.pathname === ROUTES.home;
-
-    if ((isHome && !dismissed) || forcePreview) {
-      setOpen(true);
-    } else {
-      setOpen(false);
-    }
-  }, [location.pathname, location.search]);
-
-  useEffect(() => {
-    if (slideIndex > slides.length - 1) {
-      setSlideIndex(0);
-    }
-  }, [slides.length, slideIndex]);
+  const forcePreview =
+    typeof window !== 'undefined' &&
+    (new URLSearchParams(location.search).get('previewOffer') === '1' ||
+      new URLSearchParams(location.search).get('showOffer') === '1');
+  const dismissed = getFromStorage(DISMISS_KEY, false);
+  const open = !dismissedForSession && ((location.pathname === ROUTES.home && !dismissed) || forcePreview);
 
   useEffect(() => {
     if (!open || slides.length < 2) return undefined;
@@ -109,11 +94,11 @@ const WelcomeOfferPopup = () => {
     if (dontShowAgain) {
       saveToStorage(DISMISS_KEY, true);
     }
-    setOpen(false);
+    setDismissedForSession(true);
   };
 
   return (
-    <Modal open={open} onClose={closePopup}>
+    <Modal open={open} onClose={closePopup} className="welcome-offer-modal">
       <div className="welcome-offer">
         <div className="welcome-offer-media">
           <img src={activeImage} alt={activeSlide.title || 'Casabella offer'} />
@@ -127,30 +112,44 @@ const WelcomeOfferPopup = () => {
           <p className="section-description welcome-offer-copy">{activeSlide.message}</p>
           {slides.length > 1 ? (
             <div className="welcome-offer-slides">
-              <button type="button" className="welcome-slide-btn" onClick={() => setSlideIndex((prev) => (prev - 1 + slides.length) % slides.length)}>←</button>
+              <button
+                type="button"
+                className="welcome-slide-btn"
+                onClick={() => setSlideIndex((prev) => (prev - 1 + slides.length) % slides.length)}
+                aria-label="Previous offer"
+              >
+                ←
+              </button>
               <div className="welcome-slide-dots">
                 {slides.map((_, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    className={`welcome-slide-dot ${idx === slideIndex ? 'active' : ''}`}
+                    className={`welcome-slide-dot ${idx === activeSlideIndex ? 'active' : ''}`}
                     onClick={() => setSlideIndex(idx)}
                     aria-label={`Go to slide ${idx + 1}`}
                   />
                 ))}
               </div>
-              <button type="button" className="welcome-slide-btn" onClick={() => setSlideIndex((prev) => (prev + 1) % slides.length)}>→</button>
+              <button
+                type="button"
+                className="welcome-slide-btn"
+                onClick={() => setSlideIndex((prev) => (prev + 1) % slides.length)}
+                aria-label="Next offer"
+              >
+                →
+              </button>
             </div>
           ) : null}
           <div className="welcome-offer-actions">
-            <Button to={activeSlide.ctaPath} onClick={closePopup}>
-              {activeSlide.ctaLabel}
+            <Button to={ROUTES.promotions} onClick={closePopup}>
+              View More Details
             </Button>
             <Button variant="secondary" onClick={closePopup}>
               Maybe later
             </Button>
           </div>
-          <label style={{ display: 'inline-flex', gap: '0.45rem', alignItems: 'center', marginTop: '0.8rem', fontSize: '0.92rem' }}>
+          <label className="welcome-offer-dismiss">
             <input
               type="checkbox"
               checked={dontShowAgain}

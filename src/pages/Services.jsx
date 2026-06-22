@@ -15,6 +15,17 @@ import {
 } from '../utils/adminApi';
 
 const ADMIN_SESSION_KEY = 'adminSession';
+const CATEGORY_ORDER = [
+  'Manicure',
+  'Pedicure',
+  'Acrylic',
+  'Dipping',
+  'Builder Gel',
+  'Add-Ons',
+  'Pedicure Add-Ons',
+  'Waxing',
+  'Kids',
+];
 
 const serviceKey = (service) => `${service.name}::${service.category}`;
 
@@ -26,9 +37,14 @@ const initialNewService = {
   priceFrom: '',
 };
 
+const initialCategory = () =>
+  typeof window !== 'undefined' && window.matchMedia('(max-width: 719px)').matches
+    ? 'Manicure'
+    : 'All';
+
 const Services = () => {
   const [services, setServices] = useState(staticServices);
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [editingKey, setEditingKey] = useState('');
   const [editingPrice, setEditingPrice] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -70,7 +86,17 @@ const Services = () => {
   }, []);
 
   const categories = useMemo(
-    () => ['All', ...Array.from(new Set(services.map((item) => item.category)))],
+    () => [
+      'All',
+      ...Array.from(new Set(services.map((item) => item.category))).sort((a, b) => {
+        const aIndex = CATEGORY_ORDER.indexOf(a);
+        const bIndex = CATEGORY_ORDER.indexOf(b);
+        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      }),
+    ],
     [services]
   );
 
@@ -86,11 +112,13 @@ const Services = () => {
       return acc;
     }, {});
 
-    return Object.entries(grouped).map(([category, items]) => ({
-      category,
-      items: [...items].sort((a, b) => a.priceFrom - b.priceFrom),
-    }));
-  }, [activeCategory, services]);
+    return Object.entries(grouped)
+      .map(([category, items]) => ({
+        category,
+        items: [...items].sort((a, b) => a.priceFrom - b.priceFrom),
+      }))
+      .sort((a, b) => categories.indexOf(a.category) - categories.indexOf(b.category));
+  }, [activeCategory, categories, services]);
 
   const totalVisible = groupedServices.reduce((sum, group) => sum + group.items.length, 0);
   const allVisibleItems = groupedServices.flatMap((group) => group.items);
@@ -230,13 +258,22 @@ const Services = () => {
   };
 
   return (
-    <div>
+    <div className="services-page">
       <Section
         eyebrow="Services Menu"
         title="Nail services in Oviedo, FL"
-        description="Every appointment is customized at Casabella Nail & Spa in Oviedo. Choose manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X extensions, nail art, waxing, and more."
+        description="Compare services, timing, and starting prices at a glance. Every appointment can be tailored to your preferences."
+        className="services-section"
       >
         <div className="services-toolbar reveal reveal-delay-1">
+          <label className="services-mobile-picker">
+            <span>Choose a category</span>
+            <select value={activeCategory} onChange={(event) => setActiveCategory(event.target.value)}>
+              {categories.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </label>
           <div className="services-filters">
             {categories.map((category) => (
               <button

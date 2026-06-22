@@ -1,4 +1,4 @@
-const Modal = ({ open, onClose, children }) => {
+const Modal = ({ open, onClose, children, className = '' }) => {
   if (!open) return null;
   return (
     <div
@@ -8,17 +8,18 @@ const Modal = ({ open, onClose, children }) => {
       onClick={onClose}
     >
       <div
-        className="modal-content"
+        className={`modal-content ${className}`.trim()}
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button"
           aria-label="Close"
           className="modal-close"
           onClick={onClose}
         >
           ×
         </button>
-        {children}
+        <div className="modal-scroll-area">{children}</div>
       </div>
     </div>
   );

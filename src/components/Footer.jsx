@@ -53,6 +53,9 @@ const Footer = () => (
             <Link to={ROUTES.gallery}>
               Gallery
             </Link>
+            <Link to={ROUTES.promotions}>
+              Promotions
+            </Link>
             <Link to={ROUTES.blog}>
               Blog
             </Link>

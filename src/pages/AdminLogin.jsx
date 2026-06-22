@@ -57,7 +57,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <Section eyebrow="Admin" title="Sign in" description="Login to update weekly offer advertising shown in the popup.">
+    <Section eyebrow="Admin" title="Sign in" description="Sign in to manage promotions, popup offers, services, gallery images, and blog content.">
       <div className="container" style={{ maxWidth: '620px', padding: 0 }}>
         <Card>
           <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} onSubmit={onSubmit} noValidate>

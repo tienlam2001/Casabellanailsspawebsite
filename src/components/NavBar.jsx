@@ -8,6 +8,7 @@ const links = [
   { to: ROUTES.services, label: 'Services' },
   { to: ROUTES.bookingExternal, label: 'Booking' },
   { to: ROUTES.gallery, label: 'Gallery' },
+  { to: ROUTES.promotions, label: 'Promotions' },
   { to: ROUTES.blog, label: 'Blog' },
   { to: ROUTES.contact, label: 'Contact' },
 ];

@@ -18,8 +18,8 @@ const defaultContent = {
   kicker: 'Welcome to Casabella',
   title: 'New offers every week',
   message: 'Check back often for fresh promotions on your favorite nail and spa treatments.',
-  ctaLabel: 'View Offers',
-  ctaPath: '/services',
+  ctaLabel: 'View More Details',
+  ctaPath: ROUTES.promotions,
   imageUrl: '',
   slidesJson: '',
   slideDurationMs: 5000,
@@ -84,8 +84,6 @@ const AdminAdvertise = () => {
     if (!isNotEmpty(form.kicker)) nextErrors.kicker = 'Kicker is required';
     if (!isNotEmpty(form.title)) nextErrors.title = 'Title is required';
     if (!isNotEmpty(form.message)) nextErrors.message = 'Message is required';
-    if (!isNotEmpty(form.ctaLabel)) nextErrors.ctaLabel = 'CTA label is required';
-    if (!isNotEmpty(form.ctaPath)) nextErrors.ctaPath = 'CTA path is required';
     const rawDuration = Number(form.slideDurationMs);
     if (!Number.isFinite(rawDuration) || rawDuration < 1000 || rawDuration > 60000) {
       nextErrors.slideDurationMs = 'Duration must be between 1000 and 60000 ms.';
@@ -109,8 +107,8 @@ const AdminAdvertise = () => {
         kicker: form.kicker,
         title: form.title,
         message: form.message,
-        ctaLabel: form.ctaLabel,
-        ctaPath: form.ctaPath,
+        ctaLabel: 'View More Details',
+        ctaPath: ROUTES.promotions,
         imageUrl: String(form.imageUrl || '').trim(),
         slideDurationMs: Math.round(Number(form.slideDurationMs)),
         slides: parsedSlides,
@@ -314,13 +312,9 @@ const AdminAdvertise = () => {
                 onChange={onChange}
               />
             </FormField>
-            <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))' }}>
-              <FormField label="CTA Label" required error={errors.ctaLabel}>
-                <FormField.Input name="ctaLabel" value={form.ctaLabel} onChange={onChange} />
-              </FormField>
-              <FormField label="CTA Path" required helper="Example: /services" error={errors.ctaPath}>
-                <FormField.Input name="ctaPath" value={form.ctaPath} onChange={onChange} />
-              </FormField>
+            <div className="promotion-popup-link-note">
+              <strong>Popup details link</strong>
+              <span>“View More Details” opens the Promotions page automatically.</span>
             </div>
             {notice ? <p className="muted" style={{ margin: 0 }}>{notice}</p> : null}
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
@@ -369,6 +363,7 @@ const AdminAdvertise = () => {
             Popup content is saved to the backend and published globally.
           </p>
           <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Button to={ROUTES.promotions} variant="secondary">Go to Promotions</Button>
             <Button to={ROUTES.adminServices} variant="secondary">Go to Services Pricing</Button>
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>

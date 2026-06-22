@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Services from './pages/Services';
 import Booking from './pages/Booking';
 import Gallery from './pages/Gallery';
+import Promotions from './pages/Promotions';
 import BlogList from './pages/BlogList';
 import BlogPost from './pages/BlogPost';
 import Contact from './pages/Contact';
@@ -23,6 +24,7 @@ const App = () => (
       <Route path={ROUTES.services} element={<Services />} />
       <Route path={ROUTES.booking} element={<Booking />} />
       <Route path={ROUTES.gallery} element={<Gallery />} />
+      <Route path={ROUTES.promotions} element={<Promotions />} />
       <Route path={ROUTES.blog} element={<BlogList />} />
       <Route path={`${ROUTES.blog}/:slug`} element={<BlogPost />} />
       <Route path={ROUTES.contact} element={<Contact />} />

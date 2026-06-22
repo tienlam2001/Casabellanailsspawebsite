@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import testimonials from '../data/testimonials.json';
 import posts from '../data/posts.json';
+import instagramPosts from '../data/instagramPosts';
 import Section from '../components/Section';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import InstagramFeed, { INSTAGRAM_PROFILE_URL } from '../components/InstagramFeed';
 import ROUTES from '../constants/routes';
 import { setFaqJsonLd, setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import useServices from '../hooks/useServices';
@@ -13,6 +15,7 @@ import nail1 from '../assets/nails/Nail1.png';
 import nail2 from '../assets/nails/Nail2.png';
 import nail3 from '../assets/nails/Nail3.png';
 import nail4 from '../assets/interior/Interior1.png';
+import rewardsPreview from '../assets/rewards-preview.png';
 
 
 const whyUs = [
@@ -39,6 +42,19 @@ const galleryPreview = [
   { src: nail2, alt: 'Spa pedicure bowl' },
   { src: nail3, alt: 'Soft pink manicure' },
   { src: nail4, alt: 'Before and after nails' },
+];
+
+const rewardTiers = [
+  { points: '1,000', reward: '$5' },
+  { points: '1,500', reward: '$7' },
+  { points: '1,750', reward: '$8' },
+  { points: '2,000', reward: '$10' },
+  { points: '2,500', reward: '$12' },
+  { points: '5,000', reward: '$25' },
+  { points: '10,000', reward: '$55' },
+  { points: '15,000', reward: '$90' },
+  { points: '20,000', reward: '$125' },
+  { points: '25,000', reward: '$175' },
 ];
 
 const localFaqs = [
@@ -73,11 +89,57 @@ const Home = () => {
     setFaqJsonLd(localFaqs);
   }, []);
 
+  useEffect(() => {
+    const root = document.querySelector('.home-page');
+    if (!root) return undefined;
+
+    const revealItems = Array.from(root.querySelectorAll('.reveal'));
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+      revealItems.forEach((item) => item.classList.add('is-visible'));
+      return undefined;
+    }
+
+    root.classList.add('motion-ready');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    );
+
+    revealItems.forEach((item) => observer.observe(item));
+
+    let frameId = 0;
+    const updateHeroDrift = () => {
+      const drift = Math.min(window.scrollY * 0.025, 14);
+      root.style.setProperty('--hero-drift', `${drift}px`);
+      frameId = 0;
+    };
+    const handleScroll = () => {
+      if (!frameId) frameId = window.requestAnimationFrame(updateHeroDrift);
+    };
+
+    updateHeroDrift();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
+  }, []);
+
   const featuredServices = services.slice(0, 4);
   const latestPosts = posts.slice(0, 3);
 
   return (
-    <div>
+    <div className="home-page">
       <div className="hero">
         <div className="container section-inner hero-grid hero-inner">
           <div className="hero-copy">
@@ -124,6 +186,81 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      <section id="rewards" className="rewards-section" aria-labelledby="rewards-heading">
+        <div className="container rewards-grid">
+          <div className="rewards-copy reveal">
+            <p className="eyebrow rewards-eyebrow">Casabella Rewards</p>
+            <h2 id="rewards-heading" className="section-title rewards-title">
+              Earn Points Every Time You Visit
+            </h2>
+            <p className="rewards-description">
+              Every $1 you spend earns 10 reward points. Save your points and redeem them toward future services.
+            </p>
+            <div className="rewards-rate" aria-label="One dollar spent earns ten points">
+              <strong>$1</strong>
+              <span>spent</span>
+              <b>=</b>
+              <strong>10</strong>
+              <span>points</span>
+            </div>
+            <ul className="rewards-benefits">
+              <li>See your current points and reward tier at a glance.</li>
+              <li>Redeem points toward eligible services on a future visit.</li>
+              <li>Access rewards and referral details on mobile or the web.</li>
+            </ul>
+            <Button
+              type="button"
+              disabled
+              className="rewards-button"
+            >
+              Coming Soon
+            </Button>
+          </div>
+
+          <div className="rewards-visual reveal reveal-delay-1">
+            <div className="rewards-device">
+              <img
+                src={rewardsPreview}
+                alt="Mobile rewards page showing point tiers, account benefits, and referral tools"
+              />
+            </div>
+            <p className="rewards-image-caption">Your points, perks, and referrals in one easy view.</p>
+          </div>
+        </div>
+
+        <div className="container rewards-redemption reveal">
+          <div className="rewards-redemption-copy">
+            <p className="eyebrow rewards-eyebrow">Reward Chart</p>
+            <h3>Turn your points into service credit</h3>
+            <p>
+              Keep saving or redeem when you reach any reward level. Ask our team to apply your available reward at checkout.
+            </p>
+          </div>
+          <div className="rewards-chart-panel">
+            <div className="rewards-chart-grid">
+              {[rewardTiers.slice(0, 5), rewardTiers.slice(5)].map((tiers, index) => (
+                <table className="rewards-table" key={`reward-tiers-${index}`}>
+                  <thead>
+                    <tr>
+                      <th scope="col">Points</th>
+                      <th scope="col">Reward</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tiers.map((tier) => (
+                      <tr key={tier.points}>
+                        <td>{tier.points}</td>
+                        <td>{tier.reward}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <Section id="why" eyebrow="Why Casabella" title="Calm, meticulous care">
         <div className="grid-2">
@@ -254,6 +391,19 @@ const Home = () => {
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button to={ROUTES.gallery} variant="secondary">
             View Full Gallery
+          </Button>
+        </div>
+      </Section>
+
+      <Section
+        eyebrow="Instagram"
+        title="Recent looks from @casabellaoviedoo"
+        description="See fresh nail sets, spa details, and client-ready inspiration from our Oviedo studio."
+      >
+        <InstagramFeed posts={instagramPosts} />
+        <div className="instagram-actions">
+          <Button to={INSTAGRAM_PROFILE_URL} variant="secondary" target="_blank" rel="noreferrer">
+            Follow on Instagram
           </Button>
         </div>
       </Section>
