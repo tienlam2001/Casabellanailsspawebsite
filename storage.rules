@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAllowedImage() {
+      return request.resource != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    match /offers/{fileName} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isAllowedImage();
+      allow delete: if isSignedIn();
+    }
+
+    match /promotions/{fileName} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isAllowedImage();
+      allow delete: if isSignedIn();
+    }
+
+    match /gallery/{category}/{fileName} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isAllowedImage();
+      allow delete: if isSignedIn();
+    }
+  }
+}
