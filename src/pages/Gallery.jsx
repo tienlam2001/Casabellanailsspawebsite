@@ -12,9 +12,9 @@ import { getDefaultGallery } from '../utils/defaultGallery';
 const Gallery = () => {
   useEffect(() => {
     setPageSeo({
-      title: 'Nail Gallery in Oviedo, FL',
+      title: 'Nail Gallery in Oviedo, FL Near Orlando',
       description:
-        'View Casabella Nail & Spa photos featuring Oviedo manicures, nail art, acrylic nails, dip powder, Gel-X, spa pedicures, and salon details.',
+        'View Casabella Nail & Spa photos featuring Oviedo and Orlando-area manicures, nail art, acrylic nails, dip powder, Gel-X, spa pedicures, and salon details.',
       path: ROUTES.gallery,
     });
     setLocalBusinessJsonLd();

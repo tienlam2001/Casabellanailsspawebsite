@@ -71,7 +71,12 @@ const localFaqs = [
   {
     question: 'Do you serve nearby areas outside Oviedo?',
     answer:
-      'Yes. Guests visit from Oviedo, Winter Springs, Chuluota, Geneva, Orlando, and surrounding Seminole County communities.',
+      'Yes. Guests visit from Oviedo, Winter Springs, Chuluota, Geneva, Orlando, Winter Park, Casselberry, and surrounding Seminole County communities.',
+  },
+  {
+    question: 'How far is Casabella Nail & Spa from Orlando?',
+    answer:
+      'Casabella Nail & Spa is in Oviedo, FL, about a 20-25 minute drive from downtown Orlando, making it an easy, less crowded option for Orlando-area nail and spa appointments.',
   },
 ];
 
@@ -80,9 +85,9 @@ const Home = () => {
 
   useEffect(() => {
     setPageSeo({
-      title: 'Nail Salon in Oviedo, FL',
+      title: 'Nail Salon in Oviedo, FL Near Orlando',
       description:
-        'Casabella Nail & Spa is an Oviedo, FL nail salon for manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and spa treatments.',
+        'Casabella Nail & Spa is an Oviedo, FL nail salon near Orlando for manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and spa treatments.',
       path: '/',
     });
     setLocalBusinessJsonLd();
@@ -146,9 +151,9 @@ const Home = () => {
             <span className="pill hero-kicker">
               Oviedo, Florida
             </span>
-            <h1 className="hero-title">Nail salon in Oviedo, FL for polished manicures, pedicures, and spa care.</h1>
+            <h1 className="hero-title">Nail salon in Oviedo, FL, near Orlando, for polished manicures, pedicures, and spa care.</h1>
             <p className="hero-text">
-              Casabella Nail & Spa is a modern, immaculate studio near Clayton Crossing delivering tailored manicures, spa pedicures, acrylic nails, dip powder, Gel-X, builder gel, nail art, waxing, and calming massage.
+              Casabella Nail & Spa is a modern, immaculate studio near Clayton Crossing, just a short drive from Orlando, delivering tailored manicures, spa pedicures, acrylic nails, dip powder, Gel-X, builder gel, nail art, waxing, and calming massage.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <Button to={ROUTES.bookingExternal} variant="primary">
@@ -279,19 +284,19 @@ const Home = () => {
 
       <Section
         eyebrow="Local Nail Salon"
-        title="Serving Oviedo and nearby Seminole County communities"
-        description="Visit Casabella Nail & Spa at 2871 Clayton Crossing Way #1033 in Oviedo, FL 32765. Guests come to us from Oviedo, Winter Springs, Chuluota, Geneva, Orlando, and nearby neighborhoods for clean nail care and relaxing spa services."
+        title="Serving Oviedo, Orlando, and nearby Seminole County communities"
+        description="Visit Casabella Nail & Spa at 2871 Clayton Crossing Way #1033 in Oviedo, FL 32765, about a 20-25 minute drive from downtown Orlando. Guests come to us from Oviedo, Orlando, Winter Springs, Chuluota, Geneva, Winter Park, Casselberry, and nearby neighborhoods for clean nail care and relaxing spa services."
       >
         <div className="grid-3">
-          <Card>
+          <Card className="reveal">
             <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>
               Manicures and nail enhancements
             </h2>
             <p className="section-description" style={{ marginTop: '0.5rem' }}>
-              Classic and deluxe manicures, acrylic full sets, acrylic fills, dip powder, builder gel, Gel-X extensions, French tips, chrome, cat eye finishes, and custom nail art in Oviedo.
+              Classic and deluxe manicures, acrylic full sets, acrylic fills, dip powder, builder gel, Gel-X extensions, French tips, chrome, cat eye finishes, and custom nail art for Oviedo and Orlando-area guests.
             </p>
           </Card>
-          <Card>
+          <Card className="reveal reveal-delay-1">
             <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>
               Spa pedicures in Oviedo
             </h2>
@@ -299,12 +304,20 @@ const Home = () => {
               Refresh, premium, deluxe glow, organic fresh, collagen smooth, volcano spa, espresso, and golden pedicures with gel polish and massage add-ons.
             </p>
           </Card>
-          <Card>
+          <Card className="reveal reveal-delay-2">
             <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>
               Easy local appointments
             </h2>
             <p className="section-description" style={{ marginTop: '0.5rem' }}>
               Call <a href="tel:+13214446297">(321) 444-6297</a> or book online for nail salon appointments near Oviedo on weekdays, Saturdays, and Sundays.
+            </p>
+          </Card>
+          <Card className="reveal reveal-delay-3">
+            <h2 className="section-title" style={{ fontSize: '1.25rem', margin: 0 }}>
+              Convenient for Orlando guests
+            </h2>
+            <p className="section-description" style={{ marginTop: '0.5rem' }}>
+              Skip the downtown Orlando crowds—Casabella Nail & Spa offers the same premium manicures, pedicures, and spa care in a calmer, easy-to-reach Oviedo studio.
             </p>
           </Card>
         </div>
@@ -410,8 +423,8 @@ const Home = () => {
 
       <Section eyebrow="Local FAQ" title="Oviedo nail salon questions">
         <div className="grid-3">
-          {localFaqs.map((item) => (
-            <Card key={item.question}>
+          {localFaqs.map((item, index) => (
+            <Card key={item.question} className={`reveal${index ? ` reveal-delay-${index}` : ''}`}>
               <h2 className="section-title" style={{ fontSize: '1.15rem', margin: 0 }}>
                 {item.question}
               </h2>
@@ -452,7 +465,7 @@ const Home = () => {
       </Section>
 
       <Section>
-        <Card className="cta-strip">
+        <Card className="cta-strip reveal">
           <div>
             <p className="eyebrow" style={{ color: 'rgba(255,255,255,0.75)', marginBottom: '0.35rem' }}>
               Ready when you are

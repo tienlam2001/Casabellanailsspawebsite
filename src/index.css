@@ -85,10 +85,38 @@ img {
 }
 
 .section {
+  position: relative;
   padding: 4rem 0;
 }
 
+.section::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  right: -120px;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(217, 168, 78, 0.14) 0%, transparent 72%);
+  filter: blur(2px);
+  pointer-events: none;
+  z-index: 0;
+  animation: floaty 12s ease-in-out infinite;
+}
+
+.section:nth-of-type(even)::before {
+  right: auto;
+  left: -120px;
+  top: auto;
+  bottom: 8%;
+  background: radial-gradient(circle, rgba(43, 181, 148, 0.16) 0%, transparent 72%);
+  animation-duration: 14s;
+  animation-delay: 1.2s;
+}
+
 .section-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -368,6 +396,12 @@ img {
   box-shadow: 0 8px 24px rgba(255, 214, 130, 0.22);
   font-weight: 700;
   font-size: 0.85rem;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.pill:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(255, 214, 130, 0.32);
 }
 
 .hero {
@@ -580,6 +614,8 @@ img {
 .rewards-rate b {
   color: var(--sage-700);
   font-size: 1.1rem;
+  display: inline-block;
+  animation: gentle-pulse 2.4s ease-in-out infinite;
 }
 
 .rewards-rate span {
@@ -1751,9 +1787,10 @@ img {
 .cta-strip::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -20%;
   background: radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.5), transparent 60%);
   pointer-events: none;
+  animation: cta-sheen 7s ease-in-out infinite;
 }
 
 .map-embed {
@@ -1810,6 +1847,26 @@ img {
   }
   50% {
     transform: translateY(-8px);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.22);
+  }
+}
+
+@keyframes cta-sheen {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(4%, 3%);
   }
 }
 

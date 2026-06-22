@@ -22,9 +22,9 @@ const initialForm = {
 const Booking = () => {
   useEffect(() => {
     setPageSeo({
-      title: 'Book Nail Appointment in Oviedo, FL',
+      title: 'Book Nail Appointment in Oviedo, FL Near Orlando',
       description:
-        'Book a manicure, pedicure, acrylic, dip powder, Gel-X, waxing, or spa service at Casabella Nail & Spa in Oviedo, FL. Request your preferred appointment time.',
+        'Book a manicure, pedicure, acrylic, dip powder, Gel-X, waxing, or spa service at Casabella Nail & Spa in Oviedo, FL, near Orlando. Request your preferred appointment time.',
       path: ROUTES.booking,
     });
     setLocalBusinessJsonLd();

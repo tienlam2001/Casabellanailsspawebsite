@@ -58,9 +58,9 @@ const Services = () => {
 
   useEffect(() => {
     setPageSeo({
-      title: 'Nail Services in Oviedo, FL',
+      title: 'Nail Services in Oviedo, FL Near Orlando',
       description:
-        'Explore Oviedo, FL nail services at Casabella Nail & Spa: manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and kids services.',
+        'Explore nail services at Casabella Nail & Spa in Oviedo, FL, near Orlando: manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and kids services.',
       path: ROUTES.services,
     });
     setLocalBusinessJsonLd();

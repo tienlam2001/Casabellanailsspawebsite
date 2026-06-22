@@ -18,9 +18,9 @@ const initialForm = {
 const Contact = () => {
   useEffect(() => {
     setPageSeo({
-      title: 'Contact Oviedo Nail Salon',
+      title: 'Contact Oviedo Nail Salon Near Orlando',
       description:
-        'Contact Casabella Nail & Spa at 2871 Clayton Crossing Way #1033, Oviedo, FL 32765 for manicure, pedicure, nail art, waxing, and spa appointments.',
+        'Contact Casabella Nail & Spa at 2871 Clayton Crossing Way #1033, Oviedo, FL 32765, near Orlando, for manicure, pedicure, nail art, waxing, and spa appointments.',
       path: ROUTES.contact,
     });
     setLocalBusinessJsonLd();

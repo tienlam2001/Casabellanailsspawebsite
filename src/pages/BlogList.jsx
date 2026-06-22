@@ -12,9 +12,9 @@ const BlogList = () => {
 
   useEffect(() => {
     setPageSeo({
-      title: 'Oviedo Nail Care Blog',
+      title: 'Oviedo & Orlando Nail Care Blog',
       description:
-        'Read Casabella Nail & Spa tips for nail care, manicures, pedicures, spa rituals, hygiene, and local Oviedo, Florida salon updates.',
+        'Read Casabella Nail & Spa tips for nail care, manicures, pedicures, spa rituals, hygiene, and local salon updates for Oviedo and the greater Orlando area.',
       path: ROUTES.blog,
     });
     setLocalBusinessJsonLd();

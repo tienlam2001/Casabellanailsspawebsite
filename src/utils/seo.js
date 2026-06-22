@@ -1,8 +1,8 @@
 const business = {
   name: 'Casabella Nail & Spa',
-  title: 'Casabella Nail & Spa | Nail Salon in Oviedo, FL',
+  title: 'Casabella Nail & Spa | Nail Salon in Oviedo, FL Near Orlando',
   description:
-    'Casabella Nail & Spa is a nail salon in Oviedo, FL offering manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and spa treatments.',
+    'Casabella Nail & Spa is a nail salon in Oviedo, FL, a short drive from Orlando, offering manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and spa treatments.',
   phone: '+1-321-444-6297',
   email: 'oviedonail@gmail.com',
   image: '/casabella.png',
@@ -13,7 +13,16 @@ const business = {
   country: 'US',
   latitude: 28.6692,
   longitude: -81.2081,
-  areaServed: ['Oviedo', 'Winter Springs', 'Chuluota', 'Geneva', 'Orlando', 'Seminole County'],
+  areaServed: [
+    'Oviedo',
+    'Orlando',
+    'Winter Springs',
+    'Chuluota',
+    'Geneva',
+    'Winter Park',
+    'Casselberry',
+    'Seminole County',
+  ],
 };
 
 const baseTitle = business.title;
@@ -190,7 +199,7 @@ const localBusinessJsonLd = () => ({
     itemOffered: {
       '@type': 'Service',
       name,
-      areaServed: 'Oviedo, FL',
+      areaServed: ['Oviedo, FL', 'Orlando, FL'],
     },
   })),
 });
@@ -230,10 +239,10 @@ const setServiceCatalogJsonLd = (services) =>
         provider: {
           '@id': `${absoluteUrl('/')}#nailsalon`,
         },
-        areaServed: {
-          '@type': 'Place',
-          name: 'Oviedo, FL',
-        },
+        areaServed: [
+          { '@type': 'Place', name: 'Oviedo, FL' },
+          { '@type': 'Place', name: 'Orlando, FL' },
+        ],
       },
     })),
   });
