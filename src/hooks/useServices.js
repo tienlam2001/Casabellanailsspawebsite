@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import staticServices from '../data/services.json';
 import { getServices } from '../utils/adminApi';
+import { getVisibleServices } from '../utils/serviceVisibility';
 
 const useServices = () => {
-  const [services, setServices] = useState(staticServices);
+  const [services, setServices] = useState(() => getVisibleServices(staticServices));
 
   useEffect(() => {
     let mounted = true;
@@ -11,7 +12,7 @@ const useServices = () => {
       try {
         const remoteServices = await getServices();
         if (!mounted || !Array.isArray(remoteServices) || remoteServices.length === 0) return;
-        setServices(remoteServices);
+        setServices(getVisibleServices(remoteServices));
       } catch {
         // Keep static fallback when API is unavailable.
       }

@@ -7,6 +7,7 @@ const ROUTES = {
   contactExternal: 'https://www.salonschedules.com/register/tHZA2wJGqJchzHYa1nS3JByAsIh1',
   gallery: '/gallery',
   promotions: '/promotions',
+  promotionReminders: '/promotion-reminders',
   blog: '/blog',
   contact: '/contact',
   adminLogin: '/admin/login',
@@ -14,6 +15,7 @@ const ROUTES = {
   adminServices: '/admin/services',
   adminGallery: '/admin/gallery',
   adminBlog: '/admin/blog',
+  adminPromotionReminders: '/admin/promotion-reminders',
 };
 
 export default ROUTES;

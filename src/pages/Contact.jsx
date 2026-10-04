@@ -4,7 +4,6 @@ import Card from '../components/Card';
 import FormField from '../components/FormField';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import { appendToStorage } from '../utils/storage';
 import { validateContact } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 
@@ -22,6 +21,8 @@ const Contact = () => {
       description:
         'Contact Casabella Nail & Spa at 2871 Clayton Crossing Way #1033, Oviedo, FL 32765, near Orlando, for manicure, pedicure, nail art, waxing, and spa appointments.',
       path: ROUTES.contact,
+      keywords:
+        'contact nail salon Oviedo, Casabella Nail Spa phone, Oviedo nail salon address, nail salon Clayton Crossing Oviedo, nail salon near Orlando contact',
     });
     setLocalBusinessJsonLd();
   }, []);
@@ -43,9 +44,7 @@ const Contact = () => {
     if (Object.keys(validation).length) return;
 
     setSubmitting(true);
-    const entry = { ...form, createdAt: new Date().toISOString() };
     setTimeout(() => {
-      appendToStorage('contactRequests', entry);
       setSubmitting(false);
       setSubmitted(true);
       setForm(initialForm);

@@ -8,21 +8,39 @@ import { getFromStorage, saveToStorage } from '../utils/storage';
 import { isNotEmpty } from '../utils/validators';
 import { setDocumentTitle, setMetaDescription, setRobotsMeta } from '../utils/seo';
 import ROUTES from '../constants/routes';
-import { getAdminToken, setAdminToken, updateWelcomeOffer, uploadOfferImageFile } from '../utils/adminApi';
+import { getAdminToken, logoutAdmin, setAdminToken, updateWelcomeOffer, uploadOfferImageFile } from '../utils/adminApi';
 
 const ADMIN_SESSION_KEY = 'adminSession';
 const OFFER_CONTENT_KEY = 'welcomeOfferContent';
 
 const defaultContent = {
-  badge: 'Limited-time perks',
-  kicker: 'Welcome to Casabella',
-  title: 'New offers every week',
-  message: 'Check back often for fresh promotions on your favorite nail and spa treatments.',
-  ctaLabel: 'View More Details',
-  ctaPath: ROUTES.promotions,
-  imageUrl: '',
+  badge: 'September special',
+  kicker: 'Monday + Tuesday',
+  title: '10% Off When You Spend Over $60',
+  message: 'Enjoy 10% off Monday and Tuesday during September when your visit is over $60. Promotion updates will be sent by phone or posted later, so stay tuned.',
+  ctaLabel: 'Sign Up for Reminders',
+  ctaPath: ROUTES.promotionReminders,
+  imageUrl: '/promotions/september-special-mon-tue.svg',
   slidesJson: '',
-  slideDurationMs: 5000,
+  slideDurationMs: 6500,
+  slides: [
+    {
+      badge: 'September special',
+      kicker: 'Monday + Tuesday',
+      title: '10% Off When You Spend Over $60',
+      message: 'Enjoy 10% off Monday and Tuesday during September when your visit is over $60. Promotion updates will be sent by phone or posted later, so stay tuned.',
+      ctaLabel: 'Sign Up for Reminders',
+      ctaPath: ROUTES.promotionReminders,
+      imageUrl: '/promotions/september-special-mon-tue.svg',
+    },
+  ],
+};
+
+const createSlideEditorId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `slide-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
 
 const normalizeSlide = (slide, fallback = defaultContent) => ({
@@ -33,6 +51,11 @@ const normalizeSlide = (slide, fallback = defaultContent) => ({
   ctaLabel: String(slide?.ctaLabel || fallback.ctaLabel || '').trim(),
   ctaPath: String(slide?.ctaPath || fallback.ctaPath || '').trim(),
   imageUrl: String(slide?.imageUrl || '').trim(),
+});
+
+const normalizeEditorSlide = (slide, fallback = defaultContent) => ({
+  _editorId: slide?._editorId || createSlideEditorId(),
+  ...normalizeSlide(slide, fallback),
 });
 
 const AdminAdvertise = () => {
@@ -58,7 +81,7 @@ const AdminAdvertise = () => {
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const [slidesEditor, setSlidesEditor] = useState(() => {
     const parsed = Array.isArray(storedContent?.slides) ? storedContent.slides : [];
-    return parsed.map((slide) => normalizeSlide(slide, storedContent));
+    return parsed.map((slide) => normalizeEditorSlide(slide, storedContent));
   });
 
   useEffect(() => {
@@ -115,7 +138,9 @@ const AdminAdvertise = () => {
       };
       const saved = await updateWelcomeOffer(payload);
       setForm((prev) => ({ ...prev, slidesJson: JSON.stringify(parsedSlides, null, 2) }));
-      setSlidesEditor(parsedSlides.map((slide) => normalizeSlide(slide, form)));
+      setSlidesEditor((prev) => (
+        parsedSlides.map((slide, index) => normalizeEditorSlide({ ...slide, _editorId: prev[index]?._editorId }, form))
+      ));
       saveToStorage(OFFER_CONTENT_KEY, saved);
       setNotice('Saved. Refresh with ?previewOffer=1 to preview popup immediately.');
     } catch (err) {
@@ -162,7 +187,7 @@ const AdminAdvertise = () => {
   const onAddSlide = () => {
     setSlidesEditor((prev) => ([
       ...prev,
-      normalizeSlide({ title: 'New offer title', message: 'Add your offer details here.' }, form),
+      normalizeEditorSlide({ title: 'New offer title', message: 'Add your offer details here.' }, form),
     ]));
     setActivePreviewIndex(slidesEditor.length);
     setNotice('');
@@ -210,10 +235,13 @@ const AdminAdvertise = () => {
     : [{ ...normalizeSlide(form, form), title: form.title, message: form.message, imageUrl: form.imageUrl }];
   const previewSlide = previewSlides[Math.min(activePreviewIndex, previewSlides.length - 1)];
 
-  const onLogout = () => {
-    setAdminToken(null);
-    saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
-    navigate(ROUTES.adminLogin, { replace: true });
+  const onLogout = async () => {
+    try {
+      await logoutAdmin();
+    } finally {
+      saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
+      navigate(ROUTES.adminLogin, { replace: true });
+    }
   };
 
   return (
@@ -266,7 +294,7 @@ const AdminAdvertise = () => {
               {slidesEditor.length === 0 ? (
                 <p className="muted" style={{ margin: 0 }}>No slides yet. Click + Add Slide to create digital signage slides.</p>
               ) : slidesEditor.map((slide, index) => (
-                <div key={`${slide.title}-${index}`} className="popup-slide-item">
+                <div key={slide._editorId} className="popup-slide-item">
                   <div className="popup-slide-item-top">
                     <strong>Slide {index + 1}</strong>
                     <button type="button" className="popup-slide-delete-btn" onClick={() => onDeleteSlide(index)}>×</button>
@@ -367,6 +395,7 @@ const AdminAdvertise = () => {
             <Button to={ROUTES.adminServices} variant="secondary">Go to Services Pricing</Button>
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
+            <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
           </div>
         </Card>
       </div>

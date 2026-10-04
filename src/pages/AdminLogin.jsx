@@ -7,7 +7,7 @@ import Button from '../components/Button';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 import { setDocumentTitle, setMetaDescription, setRobotsMeta } from '../utils/seo';
 import ROUTES from '../constants/routes';
-import { loginAdmin, setAdminToken } from '../utils/adminApi';
+import { getAdminToken, loginAdmin, setAdminToken } from '../utils/adminApi';
 
 const ADMIN_USER = 'admin';
 const ADMIN_SESSION_KEY = 'adminSession';
@@ -26,7 +26,7 @@ const AdminLogin = () => {
     setRobotsMeta('noindex, nofollow');
   }, []);
 
-  if (existingSession?.loggedIn) {
+  if (existingSession?.loggedIn && getAdminToken()) {
     return <Navigate to={ROUTES.adminAdvertise} replace />;
   }
 
@@ -41,7 +41,6 @@ const AdminLogin = () => {
     setError('');
     try {
       const result = await loginAdmin(form);
-      setAdminToken(result.token);
       saveToStorage(ADMIN_SESSION_KEY, {
         loggedIn: true,
         username: result.username || ADMIN_USER,
@@ -50,6 +49,8 @@ const AdminLogin = () => {
       const nextPath = location.state?.from || ROUTES.adminAdvertise;
       navigate(nextPath, { replace: true });
     } catch (err) {
+      setAdminToken(null);
+      saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
       setError(err.message || 'Login failed');
     } finally {
       setSubmitting(false);

@@ -16,6 +16,8 @@ const Gallery = () => {
       description:
         'View Casabella Nail & Spa photos featuring Oviedo and Orlando-area manicures, nail art, acrylic nails, dip powder, Gel-X, spa pedicures, and salon details.',
       path: ROUTES.gallery,
+      keywords:
+        'nail gallery Oviedo, nail art Oviedo FL, acrylic nail photos Oviedo, Gel-X nail designs Oviedo, manicure ideas Oviedo, pedicure photos Oviedo',
     });
     setLocalBusinessJsonLd();
   }, []);

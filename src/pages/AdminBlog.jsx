@@ -11,6 +11,7 @@ import fallbackPosts from '../data/posts.json';
 import slugify from '../utils/slug';
 import {
   getAdminToken,
+  logoutAdmin,
   setAdminToken,
   getBlogPosts,
   createBlogPost,
@@ -60,10 +61,6 @@ const AdminBlog = () => {
     load();
   }, []);
 
-  if (!session?.loggedIn) {
-    return <Navigate to={ROUTES.adminLogin} replace state={{ from: ROUTES.adminBlog }} />;
-  }
-
   const withAuthHandling = async (action) => {
     const token = getAdminToken();
     if (!token) {
@@ -88,16 +85,23 @@ const AdminBlog = () => {
     setEditingId(null);
   };
 
-  const onLogout = () => {
-    setAdminToken(null);
-    saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
-    navigate(ROUTES.adminLogin, { replace: true });
+  const onLogout = async () => {
+    try {
+      await logoutAdmin();
+    } finally {
+      saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
+      navigate(ROUTES.adminLogin, { replace: true });
+    }
   };
 
   const normalizedPosts = useMemo(
     () => [...posts].sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf()),
     [posts]
   );
+
+  if (!session?.loggedIn) {
+    return <Navigate to={ROUTES.adminLogin} replace state={{ from: ROUTES.adminBlog }} />;
+  }
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -236,6 +240,7 @@ const AdminBlog = () => {
             <Button to={ROUTES.adminServices} variant="secondary">Go to Services Pricing</Button>
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={ROUTES.blog} variant="ghost">Open Public Blog</Button>
+            <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
           </div>
           <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button type="button" variant="secondary" onClick={() => seedFromDefaults(false)} disabled={saving}>Initialize Firebase Blog</Button>

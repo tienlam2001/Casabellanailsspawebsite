@@ -1,5 +1,7 @@
 const business = {
   name: 'Casabella Nail & Spa',
+  alternateName: 'Casabella Nail Spa Oviedo',
+  siteUrl: 'https://www.casabellanailspaoviedo.com',
   title: 'Casabella Nail & Spa | Nail Salon in Oviedo, FL Near Orlando',
   description:
     'Casabella Nail & Spa is a nail salon in Oviedo, FL, a short drive from Orlando, offering manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and spa treatments.',
@@ -13,6 +15,8 @@ const business = {
   country: 'US',
   latitude: 28.6692,
   longitude: -81.2081,
+  instagram: 'https://www.instagram.com/casabellaoviedoo/',
+  bookingUrl: 'https://abcapp.us/feedback/appointment?appid=v7sc4jT',
   areaServed: [
     'Oviedo',
     'Orlando',
@@ -26,17 +30,23 @@ const business = {
 };
 
 const baseTitle = business.title;
-
-const getOrigin = () => {
-  if (typeof window === 'undefined') return '';
-  return window.location.origin;
-};
+const siteUrl = business.siteUrl;
+const defaultKeywords = [
+  'nail salon Oviedo FL',
+  'Casabella Nail Spa Oviedo',
+  'manicure Oviedo',
+  'pedicure Oviedo',
+  'acrylic nails Oviedo',
+  'dip powder nails Oviedo',
+  'Gel-X Oviedo',
+  'nail art Oviedo',
+  'waxing Oviedo',
+  'nail salon near Orlando',
+].join(', ');
 
 const absoluteUrl = (path = '/') => {
-  const origin = getOrigin();
-  if (!origin) return path;
   if (/^https?:\/\//i.test(path)) return path;
-  return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
+  return `${siteUrl}${path.startsWith('/') ? path : `/${path}`}`;
 };
 
 const setDocumentTitle = (title) => {
@@ -101,11 +111,13 @@ const setSocialMeta = ({ title = baseTitle, description = business.description, 
   setMetaProperty('og:description', description);
   setMetaProperty('og:url', url);
   setMetaProperty('og:image', image);
+  setMetaProperty('og:image:alt', `${business.name} nail salon in Oviedo, Florida`);
   setMetaProperty('og:locale', 'en_US');
   setMetaName('twitter:card', 'summary_large_image');
   setMetaName('twitter:title', title);
   setMetaName('twitter:description', description);
   setMetaName('twitter:image', image);
+  setMetaName('twitter:image:alt', `${business.name} nail salon in Oviedo, Florida`);
 };
 
 const setJsonLd = (id, data) => {
@@ -128,15 +140,94 @@ const clearJsonLd = (id) => {
   document.querySelector(`script[data-seo-id="${id}"]`)?.remove();
 };
 
-const setPageSeo = ({ title, description, path, robots = 'index, follow' }) => {
+const getBreadcrumbName = (segment) => {
+  const names = {
+    services: 'Services',
+    booking: 'Booking',
+    gallery: 'Gallery',
+    promotions: 'Promotions',
+    'promotion-reminders': 'Promotion Reminders',
+    blog: 'Blog',
+    contact: 'Contact',
+  };
+  return names[segment] || segment.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const setWebsiteJsonLd = () =>
+  setJsonLd('website', {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${absoluteUrl('/')}#website`,
+    name: business.name,
+    alternateName: business.alternateName,
+    url: absoluteUrl('/'),
+    inLanguage: 'en-US',
+    publisher: {
+      '@id': `${absoluteUrl('/')}#nailsalon`,
+    },
+  });
+
+const setWebPageJsonLd = ({ title, description, path }) =>
+  setJsonLd('webpage', {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${absoluteUrl(path)}#webpage`,
+    url: absoluteUrl(path),
+    name: title || baseTitle,
+    description,
+    inLanguage: 'en-US',
+    isPartOf: {
+      '@id': `${absoluteUrl('/')}#website`,
+    },
+    about: {
+      '@id': `${absoluteUrl('/')}#nailsalon`,
+    },
+    primaryImageOfPage: {
+      '@type': 'ImageObject',
+      url: absoluteUrl(business.image),
+    },
+  });
+
+const setBreadcrumbJsonLd = (path = '/') => {
+  const cleanPath = String(path || '/').split('?')[0].replace(/\/+$/, '') || '/';
+  const segments = cleanPath === '/' ? [] : cleanPath.split('/').filter(Boolean);
+  const items = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: absoluteUrl('/'),
+    },
+    ...segments.map((segment, index) => ({
+      '@type': 'ListItem',
+      position: index + 2,
+      name: getBreadcrumbName(segment),
+      item: absoluteUrl(`/${segments.slice(0, index + 1).join('/')}`),
+    })),
+  ];
+
+  setJsonLd('breadcrumbs', {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items,
+  });
+};
+
+const setPageSeo = ({ title, description, path, robots = 'index, follow', keywords = defaultKeywords }) => {
+  const pagePath = path || (typeof window !== 'undefined' ? window.location.pathname : '/');
   const fullTitle = title ? `${title} | ${business.name}` : baseTitle;
   setDocumentTitle(title);
   setMetaDescription(description);
   setRobotsMeta(robots);
-  setCanonicalUrl(path);
-  setSocialMeta({ title: fullTitle, description, path });
+  setMetaName('keywords', keywords);
+  setCanonicalUrl(pagePath);
+  setSocialMeta({ title: fullTitle, description, path: pagePath });
+  setWebsiteJsonLd();
+  setWebPageJsonLd({ title: fullTitle, description, path: pagePath });
+  setBreadcrumbJsonLd(pagePath);
   clearJsonLd('faq');
   clearJsonLd('service-catalog');
+  clearJsonLd('article');
 };
 
 const localBusinessJsonLd = () => ({
@@ -144,11 +235,18 @@ const localBusinessJsonLd = () => ({
   '@type': 'NailSalon',
   '@id': `${absoluteUrl('/')}#nailsalon`,
   name: business.name,
+  alternateName: business.alternateName,
+  description: business.description,
   url: absoluteUrl('/'),
   image: absoluteUrl(business.image),
+  logo: absoluteUrl(business.image),
   telephone: business.phone,
   email: business.email,
   priceRange: '$$',
+  currenciesAccepted: 'USD',
+  paymentAccepted: 'Cash, Credit Card, Debit Card',
+  slogan: 'Luxury nail and spa care in Oviedo, Florida',
+  sameAs: [business.instagram],
   address: {
     '@type': 'PostalAddress',
     streetAddress: business.streetAddress,
@@ -164,6 +262,14 @@ const localBusinessJsonLd = () => ({
   },
   hasMap:
     'https://www.google.com/maps/search/?api=1&query=2871%20Clayton%20Crossing%20Way%20%231033%2C%20Oviedo%2C%20FL%2032765',
+  potentialAction: {
+    '@type': 'ReserveAction',
+    target: business.bookingUrl,
+    result: {
+      '@type': 'Reservation',
+      name: 'Nail salon appointment',
+    },
+  },
   areaServed: business.areaServed.map((name) => ({ '@type': 'Place', name })),
   openingHoursSpecification: [
     {
@@ -226,11 +332,19 @@ const setServiceCatalogJsonLd = (services) =>
     '@type': 'OfferCatalog',
     name: `${business.name} services`,
     url: absoluteUrl('/services'),
-    itemListElement: services.map((service) => ({
+    itemListElement: services.map((service, index) => ({
       '@type': 'Offer',
+      position: index + 1,
+      url: absoluteUrl('/services'),
       priceCurrency: 'USD',
       price: service.priceFrom,
       availability: 'https://schema.org/InStock',
+      priceSpecification: {
+        '@type': 'PriceSpecification',
+        priceCurrency: 'USD',
+        price: service.priceFrom,
+        minPrice: service.priceFrom,
+      },
       itemOffered: {
         '@type': 'Service',
         name: service.name,
@@ -247,6 +361,29 @@ const setServiceCatalogJsonLd = (services) =>
     })),
   });
 
+const setArticleJsonLd = (post) =>
+  setJsonLd('article', {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    '@id': `${absoluteUrl(`/blog/${post.slug}`)}#article`,
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.date,
+    dateModified: post.date,
+    mainEntityOfPage: {
+      '@id': `${absoluteUrl(`/blog/${post.slug}`)}#webpage`,
+    },
+    author: {
+      '@type': 'Organization',
+      name: business.name,
+      url: absoluteUrl('/'),
+    },
+    publisher: {
+      '@id': `${absoluteUrl('/')}#nailsalon`,
+    },
+    image: absoluteUrl(business.image),
+  });
+
 export {
   business,
   setDocumentTitle,
@@ -256,4 +393,5 @@ export {
   setLocalBusinessJsonLd,
   setFaqJsonLd,
   setServiceCatalogJsonLd,
+  setArticleJsonLd,
 };

@@ -1,14 +1,14 @@
 [
   {
     "name": "Classic Manicure",
-    "shortDescription": "Cuticle care, shaping, and polish. Add gel for +$15.",
+    "shortDescription": "Cuticle care, shaping, and polish.",
     "duration": "30 min",
     "priceFrom": 20,
     "category": "Manicure"
   },
   {
     "name": "Deluxe Manicure",
-    "shortDescription": "Includes exfoliation and massage. Add gel for +$15.",
+    "shortDescription": "Includes exfoliation and massage.",
     "duration": "45 min",
     "priceFrom": 28,
     "category": "Manicure"
@@ -176,9 +176,9 @@
   },
   {
     "name": "Pedicure Gel Polish",
-    "shortDescription": "Long-wear gel polish add-on for toes.",
+    "shortDescription": "Add gel polish to any pedicure.",
     "duration": "Add-on",
-    "priceFrom": 15,
+    "priceFrom": 18,
     "category": "Pedicure Add-Ons"
   },
   {
@@ -231,13 +231,6 @@
     "category": "Waxing"
   },
   {
-    "name": "Full Arms Wax",
-    "shortDescription": "Hair removal.",
-    "duration": "30 min",
-    "priceFrom": 50,
-    "category": "Waxing"
-  },
-  {
     "name": "Half Arms Wax",
     "shortDescription": "Hair removal.",
     "duration": "20 min",
@@ -256,20 +249,6 @@
     "shortDescription": "Hair removal.",
     "duration": "30 min",
     "priceFrom": 40,
-    "category": "Waxing"
-  },
-  {
-    "name": "Bikini Wax",
-    "shortDescription": "Hair removal.",
-    "duration": "30 min",
-    "priceFrom": 50,
-    "category": "Waxing"
-  },
-  {
-    "name": "Brazilian Wax",
-    "shortDescription": "Complete hair removal.",
-    "duration": "45 min",
-    "priceFrom": 80,
     "category": "Waxing"
   },
   {

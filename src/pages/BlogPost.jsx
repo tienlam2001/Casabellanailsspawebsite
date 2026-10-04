@@ -4,7 +4,7 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
-import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
+import { setArticleJsonLd, setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import useBlogPosts from '../hooks/useBlogPosts';
 
 const renderContent = (content) => {
@@ -39,8 +39,10 @@ const BlogPost = () => {
         title: post.title,
         description: post.excerpt,
         path: `${ROUTES.blog}/${post.slug}`,
+        keywords: [...(post.tags || []), 'Oviedo nail salon', 'nail care tips', 'Casabella Nail & Spa'].join(', '),
       });
       setLocalBusinessJsonLd();
+      setArticleJsonLd(post);
     } else {
       setPageSeo({
         title: 'Post not found',

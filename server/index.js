@@ -1,15 +1,20 @@
 import { createServer } from 'node:http';
+import { Buffer } from 'node:buffer';
+import { timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { env } from 'node:process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, 'data');
 const OFFER_FILE = resolve(DATA_DIR, 'offer.json');
 const SERVICES_FILE = resolve(DATA_DIR, 'services.json');
 const SOURCE_SERVICES_FILE = resolve(__dirname, '..', 'src', 'data', 'services.json');
-const PORT = Number(process.env.ADMIN_API_PORT || 8787);
-const ALLOWED_ORIGIN = process.env.ADMIN_ALLOWED_ORIGIN || '*';
+const PORT = Number(env.ADMIN_API_PORT || 8787);
+const HOST = env.ADMIN_API_HOST || '127.0.0.1';
+const ALLOWED_ORIGIN = env.ADMIN_ALLOWED_ORIGIN || 'http://localhost:5173';
+const ADMIN_API_TOKEN = env.ADMIN_API_TOKEN || '';
 
 const defaultOffer = {
   badge: 'Limited-time perks',
@@ -112,6 +117,16 @@ const makeServiceKey = (service) =>
 const isValidPrice = (value) => Number.isInteger(value) && value >= 0 && value <= 10000;
 const isNonEmptyText = (value) => typeof value === 'string' && value.trim().length > 0;
 
+const isAuthorizedAdmin = (req) => {
+  if (!ADMIN_API_TOKEN) return false;
+  const header = String(req.headers.authorization || '');
+  const supplied = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const expectedBuffer = Buffer.from(ADMIN_API_TOKEN);
+  const suppliedBuffer = Buffer.from(supplied);
+  return expectedBuffer.length === suppliedBuffer.length
+    && timingSafeEqual(expectedBuffer, suppliedBuffer);
+};
+
 const server = createServer(async (req, res) => {
   if (!isOriginAllowed(req.headers.origin)) {
     return json(req, res, 403, { error: 'Origin not allowed' });
@@ -126,6 +141,15 @@ const server = createServer(async (req, res) => {
 
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
+
+    if (url.pathname.startsWith('/api/admin/')) {
+      if (!ADMIN_API_TOKEN) {
+        return json(req, res, 503, { error: 'Admin API is not configured' });
+      }
+      if (!isAuthorizedAdmin(req)) {
+        return json(req, res, 401, { error: 'Unauthorized' });
+      }
+    }
 
     if (req.method === 'GET' && url.pathname === '/api/health') {
       return json(req, res, 200, { ok: true });
@@ -229,6 +253,6 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Admin API running on http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Admin API running on http://${HOST}:${PORT}`);
 });

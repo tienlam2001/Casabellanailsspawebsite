@@ -26,4 +26,13 @@ const validateContact = (form) => {
   return errors;
 };
 
-export { isEmail, isPhone, isNotEmpty, validateBooking, validateContact };
+const validatePromotionReminderSignup = (form) => {
+  const errors = {};
+  if (!isNotEmpty(form.firstName)) errors.firstName = 'First name is required';
+  if (!isNotEmpty(form.lastName)) errors.lastName = 'Last name is required';
+  if (!isEmail(form.email)) errors.email = 'Valid email is required';
+  if (!isPhone(form.phone)) errors.phone = 'Valid phone is required';
+  return errors;
+};
+
+export { isEmail, isPhone, isNotEmpty, validateBooking, validateContact, validatePromotionReminderSignup };

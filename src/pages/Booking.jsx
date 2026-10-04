@@ -5,7 +5,6 @@ import FormField from '../components/FormField';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
 import services from '../data/services.json';
-import { appendToStorage } from '../utils/storage';
 import { validateBooking } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 
@@ -26,6 +25,8 @@ const Booking = () => {
       description:
         'Book a manicure, pedicure, acrylic, dip powder, Gel-X, waxing, or spa service at Casabella Nail & Spa in Oviedo, FL, near Orlando. Request your preferred appointment time.',
       path: ROUTES.booking,
+      keywords:
+        'book nail appointment Oviedo, nail salon appointment Oviedo FL, pedicure appointment Oviedo, manicure booking Oviedo, Casabella Nail Spa booking',
     });
     setLocalBusinessJsonLd();
   }, []);
@@ -53,7 +54,6 @@ const Booking = () => {
     setSubmitting(true);
     const entry = { ...form, createdAt: new Date().toISOString() };
     setTimeout(() => {
-      appendToStorage('bookingRequests', entry);
       setSubmitted(entry);
       setSubmitting(false);
       setForm(initialForm);

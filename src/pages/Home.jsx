@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import testimonials from '../data/testimonials.json';
 import posts from '../data/posts.json';
@@ -9,6 +9,7 @@ import Card from '../components/Card';
 import InstagramFeed, { INSTAGRAM_PROFILE_URL } from '../components/InstagramFeed';
 import ROUTES from '../constants/routes';
 import { setFaqJsonLd, setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
+import { getPromotions } from '../utils/adminApi';
 import useServices from '../hooks/useServices';
 import logo from '../assets/casalogo.png';
 import nail1 from '../assets/nails/Nail1.png';
@@ -57,6 +58,26 @@ const rewardTiers = [
   { points: '25,000', reward: '$175' },
 ];
 
+const directionsUrl = 'https://www.google.com/maps/search/?api=1&query=2871%20Clayton%20Crossing%20Way%20%231033%2C%20Oviedo%2C%20FL%2032765';
+
+const toLocalDateValue = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatPromotionDate = (value) => {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+};
+
 const localFaqs = [
   {
     question: 'Where is Casabella Nail & Spa located in Oviedo, FL?',
@@ -82,6 +103,10 @@ const localFaqs = [
 
 const Home = () => {
   const services = useServices();
+  const [promotions, setPromotions] = useState([]);
+  const [promotionsLoaded, setPromotionsLoaded] = useState(false);
+  const [showBookingPromo, setShowBookingPromo] = useState(false);
+  const [bookingGateBusy, setBookingGateBusy] = useState(false);
 
   useEffect(() => {
     setPageSeo({
@@ -89,9 +114,30 @@ const Home = () => {
       description:
         'Casabella Nail & Spa is an Oviedo, FL nail salon near Orlando for manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and spa treatments.',
       path: '/',
+      keywords:
+        'nail salon Oviedo FL, best nail salon Oviedo, manicure Oviedo, pedicure Oviedo, acrylic nails Oviedo, dip powder Oviedo, Gel-X Oviedo, nail salon near Orlando',
     });
     setLocalBusinessJsonLd();
     setFaqJsonLd(localFaqs);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadPromotions = async () => {
+      try {
+        const items = await getPromotions();
+        if (mounted) setPromotions(items);
+      } catch {
+        if (mounted) setPromotions([]);
+      } finally {
+        if (mounted) setPromotionsLoaded(true);
+      }
+    };
+
+    loadPromotions();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -142,10 +188,129 @@ const Home = () => {
 
   const featuredServices = services.slice(0, 4);
   const latestPosts = posts.slice(0, 3);
+  const activePromotion = useMemo(() => {
+    const today = toLocalDateValue(new Date());
+    return promotions.find((promotion) => (
+      promotion.isActive &&
+      promotion.startDate <= today &&
+      promotion.endDate >= today
+    ));
+  }, [promotions]);
+
+  const continueToBooking = () => {
+    window.location.href = ROUTES.bookingExternal;
+  };
+
+  const findActivePromotion = (items) => {
+    const today = toLocalDateValue(new Date());
+    return items.find((promotion) => (
+      promotion.isActive &&
+      promotion.startDate <= today &&
+      promotion.endDate >= today
+    ));
+  };
+
+  const handleMobileBooking = async (event) => {
+    event.preventDefault();
+    if (bookingGateBusy) return;
+
+    if (promotionsLoaded) {
+      if (activePromotion) setShowBookingPromo(true);
+      else continueToBooking();
+      return;
+    }
+
+    setBookingGateBusy(true);
+    try {
+      const items = await getPromotions();
+      setPromotions(items);
+      setPromotionsLoaded(true);
+      const nextActivePromotion = findActivePromotion(items);
+      if (nextActivePromotion) {
+        setShowBookingPromo(true);
+      } else {
+        continueToBooking();
+      }
+    } catch {
+      continueToBooking();
+    } finally {
+      setBookingGateBusy(false);
+    }
+  };
+
+  const closeBookingPromotion = () => {
+    if (bookingGateBusy) return;
+    setShowBookingPromo(false);
+  };
+
+  const handleContinueToBooking = () => {
+    if (bookingGateBusy) return;
+    setBookingGateBusy(true);
+    continueToBooking();
+  };
 
   return (
     <div className="home-page">
-      <div className="hero">
+      <section className="mobile-app-home" aria-label="Casabella Nails and Spa mobile home">
+        <div className="mobile-app-card">
+          <img className="mobile-app-logo" src={logo} alt="Casabella Nails and Spa" />
+          <h1>Casabella Nails &amp; Spa</h1>
+          <p className="mobile-app-welcome">
+            Welcome. Book your relaxing nail and spa visit in Oviedo.
+          </p>
+          <div className="mobile-app-actions" aria-label="Primary actions">
+            <a className="mobile-app-action mobile-app-action-primary" href={ROUTES.bookingExternal} onClick={handleMobileBooking} aria-busy={bookingGateBusy}>
+              {bookingGateBusy ? 'Checking Offers...' : 'Book Online'}
+            </a>
+            <a className="mobile-app-action" href="tel:+13214446297">
+              Call Us
+            </a>
+            <a className="mobile-app-action" href={directionsUrl} target="_blank" rel="noreferrer">
+              Get Directions
+            </a>
+            <a className="mobile-app-action" href={INSTAGRAM_PROFILE_URL} target="_blank" rel="noreferrer">
+              Follow Us
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {showBookingPromo && activePromotion ? (
+        <div className="mobile-booking-promo-backdrop" role="dialog" aria-modal="true" aria-labelledby="mobile-booking-promo-title">
+          <div className="mobile-booking-promo-sheet">
+            <button
+              type="button"
+              className="mobile-booking-promo-close"
+              onClick={closeBookingPromotion}
+              aria-label="Close promotion"
+            >
+              ×
+            </button>
+            {activePromotion.imageUrl ? (
+              <img
+                className="mobile-booking-promo-image"
+                src={activePromotion.imageUrl}
+                alt={`${activePromotion.title} promotion`}
+              />
+            ) : null}
+            <div className="mobile-booking-promo-content">
+              <p className="mobile-booking-promo-label">Current Promotion</p>
+              <h2 id="mobile-booking-promo-title">{activePromotion.title}</h2>
+              {activePromotion.offer ? <p className="mobile-booking-promo-offer">{activePromotion.offer}</p> : null}
+              <p className="mobile-booking-promo-description">{activePromotion.description}</p>
+              <p className="mobile-booking-promo-validity">
+                Valid {formatPromotionDate(activePromotion.startDate)} - {formatPromotionDate(activePromotion.endDate)}
+              </p>
+              <button type="button" className="mobile-booking-promo-primary" onClick={handleContinueToBooking} disabled={bookingGateBusy}>
+                {bookingGateBusy ? 'Opening...' : 'Continue to Booking'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="desktop-home-content">
+        <div className="hero">
         <div className="container section-inner hero-grid hero-inner">
           <div className="hero-copy">
             <span className="pill hero-kicker">
@@ -200,7 +365,7 @@ const Home = () => {
               Earn Points Every Time You Visit
             </h2>
             <p className="rewards-description">
-              Every $1 you spend earns 10 reward points. Save your points and redeem them toward future services.
+              Every $1 you spend earns 10 reward points. Check your rewards through Lux Loyalty by entering your phone number.
             </p>
             <div className="rewards-rate" aria-label="One dollar spent earns ten points">
               <strong>$1</strong>
@@ -210,16 +375,18 @@ const Home = () => {
               <span>points</span>
             </div>
             <ul className="rewards-benefits">
+              <li>Tap “Check Reward” on Lux Loyalty.</li>
+              <li>Enter your phone number to look up your account.</li>
               <li>See your current points and reward tier at a glance.</li>
               <li>Redeem points toward eligible services on a future visit.</li>
-              <li>Access rewards and referral details on mobile or the web.</li>
             </ul>
             <Button
-              type="button"
-              disabled
+              to={ROUTES.rewardsExternal}
               className="rewards-button"
+              target="_blank"
+              rel="noreferrer"
             >
-              Coming Soon
+              Check My Rewards
             </Button>
           </div>
 
@@ -487,6 +654,7 @@ const Home = () => {
           </div>
         </Card>
       </Section>
+      </div>
     </div>
   );
 };

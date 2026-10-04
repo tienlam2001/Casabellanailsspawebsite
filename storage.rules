@@ -2,8 +2,8 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    function isSignedIn() {
-      return request.auth != null;
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
     }
 
     function isAllowedImage() {
@@ -14,20 +14,20 @@ service firebase.storage {
 
     match /offers/{fileName} {
       allow read: if true;
-      allow create, update: if isSignedIn() && isAllowedImage();
-      allow delete: if isSignedIn();
+      allow create, update: if isAdmin() && isAllowedImage();
+      allow delete: if isAdmin();
     }
 
     match /promotions/{fileName} {
       allow read: if true;
-      allow create, update: if isSignedIn() && isAllowedImage();
-      allow delete: if isSignedIn();
+      allow create, update: if isAdmin() && isAllowedImage();
+      allow delete: if isAdmin();
     }
 
     match /gallery/{category}/{fileName} {
       allow read: if true;
-      allow create, update: if isSignedIn() && isAllowedImage();
-      allow delete: if isSignedIn();
+      allow create, update: if isAdmin() && isAllowedImage();
+      allow delete: if isAdmin();
     }
   }
 }

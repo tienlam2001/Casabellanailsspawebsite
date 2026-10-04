@@ -16,6 +16,8 @@ const BlogList = () => {
       description:
         'Read Casabella Nail & Spa tips for nail care, manicures, pedicures, spa rituals, hygiene, and local salon updates for Oviedo and the greater Orlando area.',
       path: ROUTES.blog,
+      keywords:
+        'Oviedo nail care blog, manicure tips Oviedo, pedicure tips Oviedo, nail salon hygiene Oviedo, Orlando nail care tips, Casabella Nail Spa blog',
     });
     setLocalBusinessJsonLd();
   }, []);

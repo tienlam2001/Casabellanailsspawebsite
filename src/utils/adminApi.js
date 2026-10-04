@@ -10,6 +10,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -24,17 +26,42 @@ const getAdminToken = () => {
   return window.localStorage.getItem(ADMIN_TOKEN_KEY);
 };
 
-const setAdminToken = (token) => {
+const setAdminToken = (active) => {
   if (typeof window === 'undefined') return;
-  if (!token) {
+  if (!active) {
     window.localStorage.removeItem(ADMIN_TOKEN_KEY);
     return;
   }
-  window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+  window.localStorage.setItem(ADMIN_TOKEN_KEY, 'active');
 };
 
-const ensureAdminUser = (user) => {
+const getFriendlyAuthError = (error) => {
+  if (error?.message === 'This account is not authorized to manage the website.') {
+    return error.message;
+  }
+
+  switch (error?.code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+      return 'The email or password is incorrect.';
+    case 'auth/too-many-requests':
+      return 'Too many sign-in attempts. Please wait a few minutes and try again.';
+    case 'auth/unauthorized-domain':
+      return 'This website domain is not authorized in Firebase Authentication.';
+    case 'auth/network-request-failed':
+      return 'Network error while signing in. Please check your connection and try again.';
+    default:
+      return error?.message || 'Login failed. Please try again.';
+  }
+};
+
+const ensureAdminUser = async (user, forceRefresh = false) => {
   if (!user?.email) throw new Error('Please sign in.');
+  const tokenResult = await user.getIdTokenResult(forceRefresh);
+  if (tokenResult.claims.admin !== true) {
+    throw new Error('This account is not authorized to manage the website.');
+  }
 };
 
 const getResolvedAuthUser = async () => {
@@ -49,18 +76,35 @@ const getResolvedAuthUser = async () => {
 
 const ensureAdminUserAsync = async () => {
   const user = await getResolvedAuthUser();
-  ensureAdminUser(user);
+  await ensureAdminUser(user);
   return user;
 };
 
 const loginAdmin = async ({ username, email, password }) => {
+  if (!auth) {
+    throw new Error('Firebase is not configured for admin login.');
+  }
   const nextEmail = String(email || username || '').trim();
-  const credentials = await signInWithEmailAndPassword(auth, nextEmail, password);
-  ensureAdminUser(credentials.user);
-  const jwt = await credentials.user.getIdToken();
-  setAdminToken(jwt);
+  if (!nextEmail || !password) {
+    throw new Error('Enter both admin email and password.');
+  }
+
+  let credentials;
+  try {
+    credentials = await signInWithEmailAndPassword(auth, nextEmail, password);
+  } catch (error) {
+    throw new Error(getFriendlyAuthError(error));
+  }
+
+  try {
+    await ensureAdminUser(credentials.user, true);
+  } catch (error) {
+    await signOut(auth);
+    throw new Error(getFriendlyAuthError(error));
+  }
+  setAdminToken(true);
   return {
-    token: jwt,
+    token: true,
     username: credentials.user.email,
     expiresInHours: 12,
   };
@@ -75,6 +119,36 @@ const getWelcomeOffer = async () => {
   const snapshot = await getDoc(doc(db, 'offers', 'welcome'));
   if (!snapshot.exists()) return null;
   return snapshot.data();
+};
+
+const normalizePromotionReminderSignup = (id, item) => ({
+  id,
+  firstName: String(item?.firstName || '').trim(),
+  lastName: String(item?.lastName || '').trim(),
+  email: String(item?.email || '').trim(),
+  phone: String(item?.phone || '').trim(),
+  createdAt: item?.createdAt?.toDate ? item.createdAt.toDate().toISOString() : '',
+});
+
+const createPromotionReminderSignup = async (payload) => {
+  const firstName = String(payload?.firstName || '').trim();
+  const lastName = String(payload?.lastName || '').trim();
+  const email = String(payload?.email || '').trim().toLowerCase();
+  const phone = String(payload?.phone || '').trim();
+
+  await addDoc(collection(db, 'promotionReminderSignups'), {
+    firstName,
+    lastName,
+    email,
+    phone,
+    createdAt: serverTimestamp(),
+  });
+};
+
+const getPromotionReminderSignups = async () => {
+  await ensureAdminUserAsync();
+  const snapshot = await getDocs(query(collection(db, 'promotionReminderSignups'), orderBy('createdAt', 'desc')));
+  return snapshot.docs.map((docItem) => normalizePromotionReminderSignup(docItem.id, docItem.data()));
 };
 
 const updateWelcomeOffer = async (offer) => {
@@ -567,6 +641,8 @@ export {
   loginAdmin,
   logoutAdmin,
   getWelcomeOffer,
+  createPromotionReminderSignup,
+  getPromotionReminderSignups,
   updateWelcomeOffer,
   getServices,
   updateServicePrices,

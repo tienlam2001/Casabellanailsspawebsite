@@ -4,7 +4,7 @@ import Button from '../components/Button';
 import FormField from '../components/FormField';
 import ROUTES from '../constants/routes';
 import { getFromStorage, saveToStorage } from '../utils/storage';
-import { setPageSeo } from '../utils/seo';
+import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import {
   createPromotion,
   deletePromotion,
@@ -44,11 +44,14 @@ const newPromotionForm = () => {
 
 const formatDate = (value) => {
   if (!value) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Date unavailable';
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return 'Date unavailable';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(`${value}T12:00:00`));
+  }).format(date);
 };
 
 const promotionState = (promotion, today) => {
@@ -109,10 +112,14 @@ const Promotions = () => {
 
   useEffect(() => {
     setPageSeo({
-      title: 'Promotions',
-      description: 'View current nail and spa promotions from Casabella Nail & Spa in Oviedo, Florida.',
+      title: 'Nail Salon Promotions in Oviedo, FL',
+      description:
+        'View current Casabella Nail & Spa promotions in Oviedo, FL, including nail salon specials, seasonal offers, manicure deals, pedicure deals, and spa savings.',
       path: ROUTES.promotions,
+      keywords:
+        'nail salon promotions Oviedo, nail salon specials Oviedo FL, manicure deals Oviedo, pedicure specials Oviedo, seasonal nail salon offers Oviedo',
     });
+    setLocalBusinessJsonLd();
   }, []);
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import Services from './pages/Services';
 import Booking from './pages/Booking';
 import Gallery from './pages/Gallery';
 import Promotions from './pages/Promotions';
+import PromotionReminderSignup from './pages/PromotionReminderSignup';
 import BlogList from './pages/BlogList';
 import BlogPost from './pages/BlogPost';
 import Contact from './pages/Contact';
@@ -14,6 +15,7 @@ import AdminAdvertise from './pages/AdminAdvertise';
 import AdminServices from './pages/AdminServices';
 import AdminGallery from './pages/AdminGallery';
 import AdminBlog from './pages/AdminBlog';
+import AdminPromotionReminders from './pages/AdminPromotionReminders';
 import ROUTES from './constants/routes';
 import './index.css';
 
@@ -25,6 +27,7 @@ const App = () => (
       <Route path={ROUTES.booking} element={<Booking />} />
       <Route path={ROUTES.gallery} element={<Gallery />} />
       <Route path={ROUTES.promotions} element={<Promotions />} />
+      <Route path={ROUTES.promotionReminders} element={<PromotionReminderSignup />} />
       <Route path={ROUTES.blog} element={<BlogList />} />
       <Route path={`${ROUTES.blog}/:slug`} element={<BlogPost />} />
       <Route path={ROUTES.contact} element={<Contact />} />
@@ -33,6 +36,7 @@ const App = () => (
       <Route path={ROUTES.adminServices} element={<AdminServices />} />
       <Route path={ROUTES.adminGallery} element={<AdminGallery />} />
       <Route path={ROUTES.adminBlog} element={<AdminBlog />} />
+      <Route path={ROUTES.adminPromotionReminders} element={<AdminPromotionReminders />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Layout>

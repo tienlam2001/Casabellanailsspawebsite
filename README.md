@@ -1,18 +1,19 @@
-# Casabella Nail & Spa — Oviedo, Florida
+# Casabella Nail & Spa - Oviedo, Florida
 
 Luxury, mobile-first React + Vite site with React Router and handcrafted CSS (no Tailwind required). Pages: Home, Services, Booking, Gallery, Blog, Contact.
 
 ## Run locally
-1) Install deps: `npm install`
-2) Copy env template: `cp .env.example .env` and set secure admin values
-3) Start app: `npm run dev`
-4) Production build: `npm run build` then `npm run preview`
+1. Install dependencies: `npm install`
+2. Copy `.env.example` to `.env` and configure Firebase.
+3. Start the app: `npm run dev`
+4. Build for production: `npm run build`
 
 ## Firebase admin setup
 - This app now uses Firebase Authentication + Firestore for admin login and content editing.
 - Configure Firebase values in `.env` from your Firebase project settings.
-- Set `VITE_ADMIN_EMAILS` to allowed admin account emails.
 - In Firebase Auth, create email/password users for admins.
+- Set the Firebase Auth custom claim `admin: true` on each manager account using a trusted Firebase Admin SDK environment. Sign out and back in after changing claims.
+- Deploy `firestore.rules` and `storage.rules`; both reject content mutations unless the ID token contains the admin claim.
 - In Firestore, create:
   - Collection `offers`, document `welcome` (popup content fields)
   - Collection `services` with fields:
@@ -31,10 +32,13 @@ Luxury, mobile-first React + Vite site with React Router and handcrafted CSS (no
 - Blog posts: `src/data/posts.json` (supports `tags` and simple markdown-ish lists with `- `).
 - Gallery: tweak image list in `src/pages/Gallery.jsx` (`src`, `alt`, `category`).
 - Hero/Home copy: adjust sections in `src/pages/Home.jsx`.
-- Forms store submissions to `localStorage` under `bookingRequests` and `contactRequests`.
 - Offer popup content is fetched from Firestore and cached in `localStorage` as fallback.
 
 ## Notes
 - Styling lives in `src/index.css` (CSS variables, layout, buttons, cards, forms).
 - SEO titles/descriptions are set per route with `src/utils/seo.js`.
-- Booking and Contact include validation, success states, and localStorage persistence.
+- Booking and Contact include client-side validation and success states without retaining customer form data in browser storage.
+
+## Optional local admin API
+
+`server/index.js` binds to `127.0.0.1` by default. Its mutation routes remain disabled until `ADMIN_API_TOKEN` is configured, and callers must send that value as a Bearer token. Do not put this token in any `VITE_*` variable.

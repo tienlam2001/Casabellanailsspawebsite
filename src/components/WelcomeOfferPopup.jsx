@@ -8,16 +8,41 @@ import logo from '../assets/casalogo.png';
 import offerImage from '../assets/nails/783990E5-9AE8-4718-A1C7-E200A4B6DE1A_4_5005_c.jpeg';
 import { getWelcomeOffer } from '../utils/adminApi';
 
-const DISMISS_KEY = 'welcomeOfferDismissed';
+const DISMISS_KEY = 'welcomeOfferDismissed:september-2026';
 const OFFER_CONTENT_KEY = 'welcomeOfferContent';
 
 const defaultOffer = {
-  badge: 'Limited-time perks',
-  kicker: 'Welcome to Casabella',
-  title: 'New offers every week',
-  message: 'Check back often for fresh promotions on your favorite nail and spa treatments.',
-  ctaLabel: 'View More Details',
-  ctaPath: ROUTES.promotions,
+  badge: 'September special',
+  kicker: 'Monday + Tuesday',
+  title: '10% Off When You Spend Over $60',
+  message: 'Enjoy 10% off Monday and Tuesday during September when your visit is over $60. Promotion updates will be sent by phone or posted later, so stay tuned.',
+  ctaLabel: 'Sign Up for Reminders',
+  ctaPath: ROUTES.promotionReminders,
+  imageUrl: '/promotions/september-special-mon-tue.svg',
+  slideDurationMs: 6500,
+  slides: [
+    {
+      badge: 'September special',
+      kicker: 'Monday + Tuesday',
+      title: '10% Off When You Spend Over $60',
+      message: 'Enjoy 10% off Monday and Tuesday during September when your visit is over $60. Promotion updates will be sent by phone or posted later, so stay tuned.',
+      ctaLabel: 'Sign Up for Reminders',
+      ctaPath: ROUTES.promotionReminders,
+      imageUrl: '/promotions/september-special-mon-tue.svg',
+    },
+  ],
+};
+
+const legacyOfferTerms = ['august', 'happy hour', 'thursday', 'friday', 'over $80', 'august-happy-hour'];
+
+const hasLegacyOfferContent = (offer) => {
+  const searchable = JSON.stringify(offer || {}).toLowerCase();
+  return legacyOfferTerms.some((term) => searchable.includes(term));
+};
+
+const getCurrentOfferContent = (offer) => {
+  if (!offer || hasLegacyOfferContent(offer)) return defaultOffer;
+  return { ...defaultOffer, ...offer };
 };
 
 const safePath = (value, fallback) => {
@@ -40,9 +65,7 @@ const WelcomeOfferPopup = () => {
   const [dismissedForSession, setDismissedForSession] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [offerContent, setOfferContent] = useState(() =>
-    ({ ...defaultOffer, ...(getFromStorage(OFFER_CONTENT_KEY, {}) || {}) })
-  );
+  const [offerContent, setOfferContent] = useState(() => getCurrentOfferContent(getFromStorage(OFFER_CONTENT_KEY, null)));
 
   const slides = Array.isArray(offerContent?.slides) && offerContent.slides.length > 0
     ? offerContent.slides.map((slide) => normalizeSlide(slide, offerContent))
@@ -76,7 +99,7 @@ const WelcomeOfferPopup = () => {
       try {
         const offer = await getWelcomeOffer();
         if (!mounted) return;
-        const merged = { ...defaultOffer, ...(offer || {}) };
+        const merged = getCurrentOfferContent(offer);
         setOfferContent(merged);
         saveToStorage(OFFER_CONTENT_KEY, merged);
       } catch (err) {
@@ -142,8 +165,8 @@ const WelcomeOfferPopup = () => {
             </div>
           ) : null}
           <div className="welcome-offer-actions">
-            <Button to={ROUTES.promotions} onClick={closePopup}>
-              View More Details
+            <Button to={activeSlide.ctaPath || ROUTES.promotions} onClick={closePopup}>
+              {activeSlide.ctaLabel || 'View More Details'}
             </Button>
             <Button variant="secondary" onClick={closePopup}>
               Maybe later

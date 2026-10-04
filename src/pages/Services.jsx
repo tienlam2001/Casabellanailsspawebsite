@@ -6,6 +6,7 @@ import ROUTES from '../constants/routes';
 import { setLocalBusinessJsonLd, setPageSeo, setServiceCatalogJsonLd } from '../utils/seo';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 import staticServices from '../data/services.json';
+import { getVisibleServices } from '../utils/serviceVisibility';
 import {
   getAdminToken,
   setAdminToken,
@@ -43,7 +44,7 @@ const initialCategory = () =>
     : 'All';
 
 const Services = () => {
-  const [services, setServices] = useState(staticServices);
+  const [services, setServices] = useState(() => getVisibleServices(staticServices));
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [editingKey, setEditingKey] = useState('');
   const [editingPrice, setEditingPrice] = useState('');
@@ -62,9 +63,11 @@ const Services = () => {
       description:
         'Explore nail services at Casabella Nail & Spa in Oviedo, FL, near Orlando: manicures, pedicures, acrylic nails, dip powder, builder gel, Gel-X, nail art, waxing, and kids services.',
       path: ROUTES.services,
+      keywords:
+        'nail services Oviedo FL, manicure prices Oviedo, pedicure prices Oviedo, acrylic nails Oviedo, dip powder nails Oviedo, builder gel Oviedo, Gel-X Oviedo, waxing Oviedo',
     });
     setLocalBusinessJsonLd();
-    setServiceCatalogJsonLd(staticServices);
+    setServiceCatalogJsonLd(getVisibleServices(staticServices));
   }, []);
 
   useEffect(() => {
@@ -73,7 +76,7 @@ const Services = () => {
       try {
         const remoteServices = await getServices();
         if (!mounted || !Array.isArray(remoteServices) || remoteServices.length === 0) return;
-        setServices(remoteServices);
+        setServices(getVisibleServices(remoteServices));
       } catch {
         // Keep static fallback on failure.
       }
@@ -110,7 +113,7 @@ const Services = () => {
       if (!acc[service.category]) acc[service.category] = [];
       acc[service.category].push(service);
       return acc;
-    }, {});
+    }, Object.create(null));
 
     return Object.entries(grouped)
       .map(([category, items]) => ({

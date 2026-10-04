@@ -10,6 +10,7 @@ import { setDocumentTitle, setMetaDescription, setRobotsMeta } from '../utils/se
 import defaultServices from '../data/services.json';
 import {
   getAdminToken,
+  logoutAdmin,
   setAdminToken,
   getServices,
   updateServicePrices,
@@ -58,10 +59,6 @@ const AdminServices = () => {
     load();
   }, []);
 
-  if (!session?.loggedIn) {
-    return <Navigate to={ROUTES.adminLogin} replace state={{ from: ROUTES.adminServices }} />;
-  }
-
   const categories = useMemo(
     () => ['All', ...Array.from(new Set(services.map((service) => service.category)))],
     [services]
@@ -89,6 +86,10 @@ const AdminServices = () => {
     return count;
   }, [services, draftPrices]);
 
+  if (!session?.loggedIn) {
+    return <Navigate to={ROUTES.adminLogin} replace state={{ from: ROUTES.adminServices }} />;
+  }
+
   const onPriceChange = (service, value) => {
     const key = toKey(service);
     setDraftPrices((prev) => ({ ...prev, [key]: value }));
@@ -110,10 +111,13 @@ const AdminServices = () => {
     setNotice('Unsaved changes discarded.');
   };
 
-  const onLogout = () => {
-    setAdminToken(null);
-    saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
-    navigate(ROUTES.adminLogin, { replace: true });
+  const onLogout = async () => {
+    try {
+      await logoutAdmin();
+    } finally {
+      saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
+      navigate(ROUTES.adminLogin, { replace: true });
+    }
   };
 
   const onSave = async () => {
@@ -292,6 +296,7 @@ const AdminServices = () => {
             <Button to={ROUTES.adminAdvertise} variant="secondary">Go to Advertise</Button>
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
+            <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
             <Button to={`${ROUTES.home}?previewOffer=1`} variant="ghost">Preview Popup</Button>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>

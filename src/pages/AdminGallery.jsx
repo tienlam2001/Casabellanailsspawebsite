@@ -14,6 +14,7 @@ import {
   deleteGalleryImage,
   getAdminToken,
   getGalleryImages,
+  logoutAdmin,
   seedGalleryCollection,
   uploadGalleryImageFile,
   updateGalleryImage,
@@ -64,25 +65,28 @@ const AdminGallery = () => {
     load();
   }, []);
 
-  if (!session?.loggedIn) {
-    return <Navigate to={ROUTES.adminLogin} replace state={{ from: ROUTES.adminGallery }} />;
-  }
-
   const categories = useMemo(() => {
     const set = new Set(['Nails', 'Interior']);
     for (const item of items) set.add(item.category);
     return Array.from(set);
   }, [items]);
 
+  if (!session?.loggedIn) {
+    return <Navigate to={ROUTES.adminLogin} replace state={{ from: ROUTES.adminGallery }} />;
+  }
+
   const resetForm = () => {
     setForm(DEFAULT_FORM);
     setEditingId(null);
   };
 
-  const onLogout = () => {
-    setAdminToken(null);
-    saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
-    navigate(ROUTES.adminLogin, { replace: true });
+  const onLogout = async () => {
+    try {
+      await logoutAdmin();
+    } finally {
+      saveToStorage(ADMIN_SESSION_KEY, { loggedIn: false });
+      navigate(ROUTES.adminLogin, { replace: true });
+    }
   };
 
   const withAuthHandling = async (action) => {
@@ -286,6 +290,7 @@ const AdminGallery = () => {
             <Button to={ROUTES.adminServices} variant="secondary">Go to Services Pricing</Button>
             <Button to={ROUTES.gallery} variant="ghost">Open Public Gallery</Button>
             <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
+            <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
           </div>
           <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button type="button" variant="secondary" onClick={() => seedFromDefaults(false)} disabled={saving}>
