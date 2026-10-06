@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Section from '../components/Section';
+import SmartPricingMenu from '../components/SmartPricingMenu';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ROUTES from '../constants/routes';
@@ -268,6 +269,7 @@ const Services = () => {
         description="Compare services, timing, and starting prices at a glance. Every appointment can be tailored to your preferences."
         className="services-section"
       >
+        <SmartPricingMenu services={services} />
         <div className="services-toolbar reveal reveal-delay-1">
           <label className="services-mobile-picker">
             <span>Choose a category</span>

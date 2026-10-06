@@ -1289,32 +1289,39 @@ img {
 
 .welcome-offer {
   max-width: 980px;
+  height: 100%;
   display: grid;
   grid-template-columns: minmax(320px, 52%) 1fr;
-  min-height: 500px;
+  min-height: 0;
+}
+
+.welcome-offer-modal .modal-scroll-area {
+  height: min(680px, calc(90vh - 2px));
+  height: min(680px, calc(90dvh - 2px));
+  overflow: hidden;
 }
 
 .welcome-offer-media {
   position: relative;
+  min-height: 0;
   height: 100%;
+  padding: 0.75rem;
   background: #f2eee7;
 }
 
 .welcome-offer-media img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   object-position: center;
 }
 
-.welcome-offer-media-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(18, 17, 14, 0.08) 0%, rgba(18, 17, 14, 0.42) 100%);
-}
-
 .welcome-offer-body {
-  padding: 2rem;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 3.5rem 2rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1329,6 +1336,10 @@ img {
   border: 1px solid rgba(195, 159, 73, 0.22);
   padding: 0.4rem;
   margin-bottom: 0.65rem;
+}
+
+.welcome-offer-body > * {
+  flex-shrink: 0;
 }
 
 .welcome-offer-badge {
@@ -1787,7 +1798,9 @@ img {
 .popup-slide-thumb {
   width: 100%;
   max-height: 220px;
-  object-fit: cover;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: #f2eee7;
   border-radius: 12px;
   border: 1px solid rgba(195, 159, 73, 0.2);
 }
@@ -1801,9 +1814,13 @@ img {
 }
 
 .popup-preview-card img {
+  display: block;
   width: 100%;
-  height: 180px;
-  object-fit: cover;
+  height: auto;
+  max-height: 480px;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: #f2eee7;
 }
 
 .popup-preview-content {
@@ -2790,24 +2807,27 @@ img {
 
   .welcome-offer {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
     max-width: 100%;
     min-height: unset;
   }
 
   .welcome-offer-modal {
     width: min(calc(100vw - 0.75rem), 390px);
-    max-height: none;
+    max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
     border-radius: 16px;
   }
 
   .welcome-offer-modal .modal-scroll-area {
-    max-height: calc(100svh - 0.75rem);
-    max-height: calc(100dvh - 0.75rem);
+    height: calc(100svh - 2rem - env(safe-area-inset-bottom));
+    height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
+    max-height: calc(100svh - 2rem - env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
   }
 
   .welcome-offer-media {
-    height: clamp(210px, 38svh, 305px);
-    padding: 0.55rem;
+    height: 100%;
+    padding: 3.25rem 0.55rem 0.55rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2820,11 +2840,9 @@ img {
     object-fit: contain;
   }
 
-  .welcome-offer-media-overlay {
-    background: linear-gradient(180deg, rgba(18, 17, 14, 0.02) 0%, rgba(18, 17, 14, 0.24) 100%);
-  }
-
   .welcome-offer-body {
+    max-height: 45svh;
+    max-height: 45dvh;
     padding: 0.75rem 0.8rem max(0.8rem, env(safe-area-inset-bottom));
   }
 
@@ -2956,7 +2974,7 @@ img {
   }
 }
 
-@media (max-width: 900px), (max-width: 1180px) and (pointer: coarse) {
+@media (max-width: 900px), (max-width: 1366px) and (pointer: coarse) {
   .layout-home {
     position: fixed;
     inset: 0;
@@ -3422,4 +3440,73 @@ img {
 
 .gap-2 {
   gap: 0.5rem;
+}
+
+/* Service search is available on phone and tablet layouts only. */
+.smart-pricing { display: none; }
+
+@media (max-width: 900px), (max-width: 1366px) and (pointer: coarse) {
+  .smart-pricing {
+    display: block;
+    scroll-margin-top: 100px;
+    margin-bottom: 1.5rem;
+    padding: clamp(1rem, 3vw, 1.6rem);
+    border: 1px solid rgba(195, 159, 73, 0.3);
+    border-radius: 22px;
+    background: #fffaf2;
+  }
+  .layout:has(.smart-pricing) .site-mascot { display: none; }
+  .smart-pricing h2 { margin: 0; font-family: 'Playfair Display', serif; font-size: 1.65rem; }
+  .smart-pricing p { line-height: 1.5; }
+  .smart-pricing label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
+  .smart-pricing-input { display: flex; gap: 0.4rem; }
+  .smart-pricing-input input {
+    width: 100%; min-width: 0; min-height: 48px; border: 1px solid #b8a57c;
+    border-radius: 12px; padding: 0.75rem; font: inherit; font-size: 16px; background: white;
+  }
+  .smart-pricing button { min-height: 44px; padding: 0.5rem 0.8rem; border: 1px solid #b8a57c; border-radius: 12px; background: white; color: #26352d; font: inherit; cursor: pointer; }
+  .smart-pricing :is(input, button, summary, a):focus-visible { outline: 3px solid #47745c; outline-offset: 3px; }
+  .smart-pricing-suggestions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+  .smart-pricing-status, .smart-pricing-note { font-size: 0.85rem; color: #555f58; }
+  .smart-pricing-results { display: grid; gap: 0.6rem; }
+  .smart-pricing-choice { border: 1px solid #e5d8be; border-radius: 14px; background: white; overflow: hidden; }
+  .smart-pricing-choice summary { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem; cursor: pointer; list-style: none; }
+  .smart-pricing-choice summary::-webkit-details-marker { display: none; }
+  .smart-pricing-choice strong, .smart-pricing-choice small { display: block; }
+  .smart-pricing-choice small { font-size: 0.75rem; font-weight: 400; color: #5c665f; }
+  .smart-pricing-price { flex-shrink: 0; text-align: right; font-weight: 700; color: #365642; }
+  .smart-pricing-details { padding: 0 1rem 1rem; border-top: 1px solid #eee4d2; }
+  .smart-pricing-note { margin-bottom: 0; }
+  .mobile-app-card { overflow-y: auto; }
+  .mobile-app-card > * { flex-shrink: 0; }
+}
+
+.mobile-home-panel { display: none; }
+@media (max-width: 900px), (max-width: 1366px) and (pointer: coarse) {
+  .mobile-home-front { width: 100%; display: grid; place-items: center; transition: transform 320ms cubic-bezier(.22,.61,.36,1), opacity 320ms; }
+  .mobile-home-front.is-away { transform: translateX(24%); opacity: 0; pointer-events: none; }
+  .mobile-app-action { font-family: inherit; cursor: pointer; }
+  .mobile-home-panel { display: flex; flex-direction: column; position: absolute; inset: 0; z-index: 5; background: #fffaf2; transform: translateX(-100%); visibility: hidden; transition: transform 320ms cubic-bezier(.22,.61,.36,1), visibility 320ms; }
+  .mobile-home-panel.is-open { transform: translateX(0); visibility: visible; }
+  .mobile-panel-header { display: flex; gap: .75rem; align-items: center; justify-content: space-between; flex-shrink: 0; padding: max(.75rem, env(safe-area-inset-top)) 1rem .75rem; border-bottom: 1px solid #e5d8be; background: #fffdf8; }
+  .mobile-panel-header button, .mobile-gallery-filters button { min-height: 44px; padding: .5rem .85rem; border: 1px solid #d6c49b; border-radius: 12px; background: white; font: inherit; color: #26352d; cursor: pointer; }
+  .mobile-panel-header span { font-size: .8rem; color: #70634c; }
+  .mobile-panel-scroll { overflow-y: auto; overscroll-behavior-y: contain; min-height: 0; flex: 1; padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
+  .mobile-panel-scroll > div { max-width: 850px; margin-inline: auto; }
+  .mobile-panel-scroll .smart-pricing { margin-bottom: 0; }
+  .mobile-gallery-filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .mobile-gallery-filters [aria-pressed="true"] { background: #365642; color: white; }
+  .mobile-gallery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .75rem; align-items: start; }
+  .mobile-gallery-photo { border-radius: 16px; overflow: hidden; background: white; border: 1px solid #e5d8be; }
+  .mobile-gallery-photo summary { cursor: pointer; list-style: none; }
+  .mobile-gallery-photo summary::-webkit-details-marker { display: none; }
+  .mobile-gallery-photo img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+  .mobile-gallery-photo img[hidden] { display: none; }
+  .mobile-gallery-photo span, .mobile-gallery-caption { display: block; padding: .7rem; font-size: .8rem; }
+  .mobile-gallery-photo[open] { grid-column: 1 / -1; }
+  .mobile-gallery-photo[open] img { aspect-ratio: auto; max-height: 65dvh; object-fit: contain; }
+  .mobile-home-panel :is(button, summary, a):focus-visible { outline: 3px solid #47745c; outline-offset: -3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-home-panel, .mobile-home-front { transition: none; }
 }

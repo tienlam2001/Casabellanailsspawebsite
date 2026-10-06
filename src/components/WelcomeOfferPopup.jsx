@@ -125,7 +125,6 @@ const WelcomeOfferPopup = () => {
       <div className="welcome-offer">
         <div className="welcome-offer-media">
           <img src={activeImage} alt={activeSlide.title || 'Casabella offer'} />
-          <div className="welcome-offer-media-overlay" />
         </div>
         <div className="welcome-offer-body">
           <img className="welcome-offer-logo" src={logo} alt="Casabella Nail and Spa logo" />

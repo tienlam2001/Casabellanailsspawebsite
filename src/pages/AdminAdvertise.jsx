@@ -265,7 +265,7 @@ const AdminAdvertise = () => {
             <FormField label="Message" required error={errors.message}>
               <FormField.TextArea name="message" rows={4} value={form.message} onChange={onChange} />
             </FormField>
-            <FormField label="Image URL" helper="Optional: single-image popup background">
+            <FormField label="Image URL" helper="Recommended: 1200 × 1600 px (3:4 portrait). Images display in full without cropping.">
               <FormField.Input
                 name="imageUrl"
                 value={form.imageUrl || ''}
@@ -306,7 +306,7 @@ const AdminAdvertise = () => {
                     <FormField label="Message">
                       <FormField.Input value={slide.message} onChange={(e) => onSlideFieldChange(index, 'message', e.target.value)} />
                     </FormField>
-                    <FormField label="Image URL">
+                    <FormField label="Image URL" helper="Recommended: 1200 × 1600 px (3:4 portrait). Other sizes fit without cropping.">
                       <FormField.Input value={slide.imageUrl || ''} onChange={(e) => onSlideFieldChange(index, 'imageUrl', e.target.value)} placeholder="https://..." />
                     </FormField>
                   </div>

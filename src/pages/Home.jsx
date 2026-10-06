@@ -11,6 +11,7 @@ import ROUTES from '../constants/routes';
 import { setFaqJsonLd, setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import { getPromotions } from '../utils/adminApi';
 import useServices from '../hooks/useServices';
+import MobileHomePanels from '../components/MobileHomePanels';
 import logo from '../assets/casalogo.png';
 import nail1 from '../assets/nails/Nail1.png';
 import nail2 from '../assets/nails/Nail2.png';
@@ -252,6 +253,7 @@ const Home = () => {
   return (
     <div className="home-page">
       <section className="mobile-app-home" aria-label="Casabella Nails and Spa mobile home">
+        <MobileHomePanels services={services}>
         <div className="mobile-app-card">
           <img className="mobile-app-logo" src={logo} alt="Casabella Nails and Spa" />
           <h1>Casabella Nails &amp; Spa</h1>
@@ -262,6 +264,10 @@ const Home = () => {
             <a className="mobile-app-action mobile-app-action-primary" href={ROUTES.bookingExternal} onClick={handleMobileBooking} aria-busy={bookingGateBusy}>
               {bookingGateBusy ? 'Checking Offers...' : 'Book Online'}
             </a>
+            <button type="button" className="mobile-app-action" data-mobile-panel="pricing">
+              Smart Pricing Menu
+            </button>
+            <button type="button" className="mobile-app-action" data-mobile-panel="gallery">Gallery</button>
             <a className="mobile-app-action" href="tel:+13214446297">
               Call Us
             </a>
@@ -273,6 +279,7 @@ const Home = () => {
             </a>
           </div>
         </div>
+        </MobileHomePanels>
       </section>
 
       {showBookingPromo && activePromotion ? (
