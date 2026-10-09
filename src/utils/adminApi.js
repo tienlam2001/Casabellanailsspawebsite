@@ -127,6 +127,9 @@ const normalizePromotionReminderSignup = (id, item) => ({
   lastName: String(item?.lastName || '').trim(),
   email: String(item?.email || '').trim(),
   phone: String(item?.phone || '').trim(),
+  smsConsent: item?.smsConsent === true,
+  consentVersion: String(item?.consentVersion || ''),
+  optInSource: String(item?.optInSource || ''),
   createdAt: item?.createdAt?.toDate ? item.createdAt.toDate().toISOString() : '',
 });
 
@@ -135,12 +138,16 @@ const createPromotionReminderSignup = async (payload) => {
   const lastName = String(payload?.lastName || '').trim();
   const email = String(payload?.email || '').trim().toLowerCase();
   const phone = String(payload?.phone || '').trim();
+  const smsConsent = payload?.smsConsent === true;
 
   await addDoc(collection(db, 'promotionReminderSignups'), {
     firstName,
     lastName,
     email,
     phone,
+    smsConsent,
+    consentVersion: 'sms-promotion-reminders-2026-10-09',
+    optInSource: 'website-promotion-reminders-form',
     createdAt: serverTimestamp(),
   });
 };

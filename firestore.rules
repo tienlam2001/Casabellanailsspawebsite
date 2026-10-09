@@ -29,7 +29,7 @@ service cloud.firestore {
     }
 
     function hasValidPromotionReminderSignupFields() {
-      return request.resource.data.keys().hasOnly(['firstName', 'lastName', 'email', 'phone', 'createdAt'])
+      return request.resource.data.keys().hasOnly(['firstName', 'lastName', 'email', 'phone', 'smsConsent', 'consentVersion', 'optInSource', 'createdAt'])
         && request.resource.data.firstName is string
         && request.resource.data.firstName.size() > 0
         && request.resource.data.firstName.size() <= 80
@@ -44,6 +44,9 @@ service cloud.firestore {
         && request.resource.data.phone.size() >= 7
         && request.resource.data.phone.size() <= 32
         && request.resource.data.phone.matches('^\\+?[0-9\\s().-]{7,}$')
+        && request.resource.data.smsConsent == true
+        && request.resource.data.consentVersion == 'sms-promotion-reminders-2026-10-09'
+        && request.resource.data.optInSource == 'website-promotion-reminders-form'
         && request.resource.data.createdAt == request.time;
     }
 

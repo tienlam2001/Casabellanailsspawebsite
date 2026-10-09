@@ -1237,6 +1237,63 @@ img {
   font-size: 0.9rem;
 }
 
+.sms-consent {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: 0.8rem;
+  align-items: start;
+  padding: 1rem;
+  border: 1px solid rgba(217, 168, 78, 0.28);
+  border-radius: 16px;
+  background: rgba(255, 248, 239, 0.72);
+  color: var(--ink-700);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.sms-consent input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0.2rem 0 0;
+  accent-color: var(--gold-500);
+}
+
+.sms-consent input:focus-visible {
+  outline: 3px solid rgba(217, 168, 78, 0.3);
+  outline-offset: 3px;
+}
+
+.sms-consent-error {
+  border-color: #e11d48;
+}
+
+.sms-disclosure {
+  margin: -0.35rem 0 0;
+  color: var(--ink-700);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.sms-disclosure a,
+.legal-content a {
+  color: #8a641a;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.legal-content {
+  max-width: 780px;
+  color: var(--ink-700);
+  line-height: 1.75;
+}
+
+.legal-content h3 {
+  margin: 1.8rem 0 0.35rem;
+  color: var(--ink-900);
+  font-family: 'Playfair Display', serif;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

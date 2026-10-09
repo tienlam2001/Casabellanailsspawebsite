@@ -8,6 +8,8 @@ const ROUTES = {
   gallery: '/gallery',
   promotions: '/promotions',
   promotionReminders: '/promotion-reminders',
+  terms: '/terms',
+  privacy: '/privacy',
   blog: '/blog',
   contact: '/contact',
   adminLogin: '/admin/login',

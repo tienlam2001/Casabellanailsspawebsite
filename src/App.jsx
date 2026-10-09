@@ -16,6 +16,7 @@ import AdminServices from './pages/AdminServices';
 import AdminGallery from './pages/AdminGallery';
 import AdminBlog from './pages/AdminBlog';
 import AdminPromotionReminders from './pages/AdminPromotionReminders';
+import LegalPage from './pages/LegalPage';
 import ROUTES from './constants/routes';
 import './index.css';
 
@@ -28,6 +29,8 @@ const App = () => (
       <Route path={ROUTES.gallery} element={<Gallery />} />
       <Route path={ROUTES.promotions} element={<Promotions />} />
       <Route path={ROUTES.promotionReminders} element={<PromotionReminderSignup />} />
+      <Route path={ROUTES.terms} element={<LegalPage type="terms" />} />
+      <Route path={ROUTES.privacy} element={<LegalPage type="privacy" />} />
       <Route path={ROUTES.blog} element={<BlogList />} />
       <Route path={`${ROUTES.blog}/:slug`} element={<BlogPost />} />
       <Route path={ROUTES.contact} element={<Contact />} />

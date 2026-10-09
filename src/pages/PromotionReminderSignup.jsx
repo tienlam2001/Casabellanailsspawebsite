@@ -13,6 +13,7 @@ const initialForm = {
   lastName: '',
   email: '',
   phone: '',
+  smsConsent: false,
 };
 
 const PromotionReminderSignup = () => {
@@ -35,8 +36,9 @@ const PromotionReminderSignup = () => {
   }, []);
 
   const onChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, type, checked, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
     setSubmitError('');
   };
 
@@ -62,8 +64,8 @@ const PromotionReminderSignup = () => {
   return (
     <Section
       eyebrow="Promotion Reminders"
-      title="Sign Up to Get Promotion Reminders"
-      description="Join our reminder list for seasonal specials and upcoming Casabella Nail & Spa promotions."
+      title="Get Casabella Offers by Text"
+      description="Opt in to receive promotional text messages about salon specials, seasonal offers, and appointment opportunities."
     >
       <div className="container" style={{ maxWidth: '760px', padding: 0 }}>
         <Card>
@@ -76,7 +78,7 @@ const PromotionReminderSignup = () => {
                 Thank you for signing up.
               </h3>
               <p className="muted">
-                We will use your contact information to send promotion reminders and seasonal updates.
+                You have opted in to receive Casabella Nail & Spa promotional text messages. Welcome!
               </p>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <Button to={ROUTES.bookingExternal}>Book an appointment</Button>
@@ -130,13 +132,30 @@ const PromotionReminderSignup = () => {
                   />
                 </FormField>
               </div>
+              <div className={`sms-consent ${errors.smsConsent ? 'sms-consent-error' : ''}`}>
+                <input
+                  id="smsConsent"
+                  name="smsConsent"
+                  type="checkbox"
+                  checked={form.smsConsent}
+                  onChange={onChange}
+                  aria-describedby="sms-consent-details sms-consent-error"
+                />
+                <label htmlFor="smsConsent">
+                  <strong>Yes, I agree to receive recurring promotional text messages</strong> from Casabella Nail &amp; Spa at the mobile number provided, including salon specials, seasonal offers, and appointment opportunities. Consent is not a condition of purchase.
+                </label>
+              </div>
+              {errors.smsConsent ? <p id="sms-consent-error" className="field-error" style={{ margin: '-0.7rem 0 0' }}>{errors.smsConsent}</p> : null}
+              <p id="sms-consent-details" className="sms-disclosure">
+                Message frequency varies. Message and data rates may apply. Reply <strong>STOP</strong> to unsubscribe or <strong>HELP</strong> for help. View our <a href={ROUTES.terms}>Terms of Service</a> and <a href={ROUTES.privacy}>Privacy Policy</a>.
+              </p>
               {submitError ? <p className="field-error" style={{ margin: 0 }}>{submitError}</p> : null}
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
                 <p className="muted" style={{ margin: 0 }}>
-                  We only ask for the information needed to send promotion reminders.
+                  Your checkbox must be selected before you can join.
                 </p>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Signing up...' : 'Sign Up'}
+                  {submitting ? 'Signing you up...' : 'Yes, sign me up!'}
                 </Button>
               </div>
             </form>

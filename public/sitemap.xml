@@ -26,9 +26,21 @@
   </url>
   <url>
     <loc>https://www.casabellanailspaoviedo.com/promotion-reminders</loc>
-    <lastmod>2026-08-14</lastmod>
+    <lastmod>2026-10-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.casabellanailspaoviedo.com/terms</loc>
+    <lastmod>2026-10-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.casabellanailspaoviedo.com/privacy</loc>
+    <lastmod>2026-10-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
   </url>
   <url>
     <loc>https://www.casabellanailspaoviedo.com/gallery</loc>

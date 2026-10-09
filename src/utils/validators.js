@@ -32,6 +32,7 @@ const validatePromotionReminderSignup = (form) => {
   if (!isNotEmpty(form.lastName)) errors.lastName = 'Last name is required';
   if (!isEmail(form.email)) errors.email = 'Valid email is required';
   if (!isPhone(form.phone)) errors.phone = 'Valid phone is required';
+  if (form.smsConsent !== true) errors.smsConsent = 'Please check the box to agree to receive text messages';
   return errors;
 };
 

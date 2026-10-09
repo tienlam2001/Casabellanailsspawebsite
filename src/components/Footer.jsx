@@ -62,6 +62,12 @@ const Footer = () => (
             <Link to={ROUTES.contact}>
               Contact
             </Link>
+            <Link to={ROUTES.terms}>
+              Terms of Service
+            </Link>
+            <Link to={ROUTES.privacy}>
+              Privacy Policy
+            </Link>
           </div>
         </div>
       </div>
