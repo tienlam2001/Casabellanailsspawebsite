@@ -254,7 +254,8 @@ const Booking = () => {
                     Weekdays
                   </p>
                   <p className="muted" style={{ margin: 0 }}>
-                    9:00a – 7:00p
+                    Mon 11:00a – 7:00p <br />
+                    Tue–Fri 9:00a – 7:00p
                   </p>
                 </div>
                 <div>

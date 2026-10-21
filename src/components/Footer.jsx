@@ -37,7 +37,8 @@ const Footer = () => (
             Hours
           </h3>
           <p className="muted">
-            Mon–Fri: 9:30a – 7:00p <br />
+            Mon: 11:00a – 7:00p <br />
+            Tue–Fri: 9:30a – 7:00p <br />
             Sat: 9:30a – 6:00p <br />
             Sun: 11:00a – 5:00p
           </p>
