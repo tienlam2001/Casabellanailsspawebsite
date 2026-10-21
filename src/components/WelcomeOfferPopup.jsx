@@ -9,8 +9,7 @@ import offerImage from '../assets/nails/783990E5-9AE8-4718-A1C7-E200A4B6DE1A_4_5
 import { getWelcomeOffer } from '../utils/adminApi';
 
 const DISMISS_KEY = 'welcomeOfferDismissed:september-2026';
-const OFFER_CONTENT_KEY = 'welcomeOfferContent';
-
+const MOBILE_HOME_QUERY = '(max-width: 900px), (max-width: 1366px) and (pointer: coarse)';
 const defaultOffer = {
   badge: 'September special',
   kicker: 'Monday + Tuesday',
@@ -33,17 +32,7 @@ const defaultOffer = {
   ],
 };
 
-const legacyOfferTerms = ['august', 'happy hour', 'thursday', 'friday', 'over $80', 'august-happy-hour'];
-
-const hasLegacyOfferContent = (offer) => {
-  const searchable = JSON.stringify(offer || {}).toLowerCase();
-  return legacyOfferTerms.some((term) => searchable.includes(term));
-};
-
-const getCurrentOfferContent = (offer) => {
-  if (!offer || hasLegacyOfferContent(offer)) return defaultOffer;
-  return { ...defaultOffer, ...offer };
-};
+const getCurrentOfferContent = (offer) => (offer ? { ...defaultOffer, ...offer } : null);
 
 const safePath = (value, fallback) => {
   const s = String(value || '').trim();
@@ -51,12 +40,12 @@ const safePath = (value, fallback) => {
 };
 
 const normalizeSlide = (slide, fallback) => ({
-  badge: slide?.badge || fallback.badge || defaultOffer.badge,
-  kicker: slide?.kicker || fallback.kicker || defaultOffer.kicker,
-  title: slide?.title || fallback.title || defaultOffer.title,
-  message: slide?.message || fallback.message || defaultOffer.message,
-  ctaLabel: slide?.ctaLabel || fallback.ctaLabel || defaultOffer.ctaLabel,
-  ctaPath: safePath(slide?.ctaPath || fallback.ctaPath, defaultOffer.ctaPath),
+  badge: slide?.badge || fallback?.badge || defaultOffer.badge,
+  kicker: slide?.kicker || fallback?.kicker || defaultOffer.kicker,
+  title: slide?.title || fallback?.title || defaultOffer.title,
+  message: slide?.message || fallback?.message || defaultOffer.message,
+  ctaLabel: slide?.ctaLabel || fallback?.ctaLabel || defaultOffer.ctaLabel,
+  ctaPath: safePath(slide?.ctaPath || fallback?.ctaPath, defaultOffer.ctaPath),
   imageUrl: slide?.imageUrl || '',
 });
 
@@ -65,7 +54,10 @@ const WelcomeOfferPopup = () => {
   const [dismissedForSession, setDismissedForSession] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [offerContent, setOfferContent] = useState(() => getCurrentOfferContent(getFromStorage(OFFER_CONTENT_KEY, null)));
+  const [offerContent, setOfferContent] = useState(null);
+  const [isMobileHome, setIsMobileHome] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia(MOBILE_HOME_QUERY).matches
+  );
 
   const slides = Array.isArray(offerContent?.slides) && offerContent.slides.length > 0
     ? offerContent.slides.map((slide) => normalizeSlide(slide, offerContent))
@@ -77,13 +69,23 @@ const WelcomeOfferPopup = () => {
       : 5000;
   const activeSlideIndex = Math.min(slideIndex, slides.length - 1);
   const activeSlide = slides[activeSlideIndex] || defaultOffer;
-  const activeImage = activeSlide.imageUrl || offerContent.imageUrl || offerImage;
+  const activeImage = activeSlide.imageUrl || offerContent?.imageUrl || offerImage;
   const forcePreview =
     typeof window !== 'undefined' &&
     (new URLSearchParams(location.search).get('previewOffer') === '1' ||
       new URLSearchParams(location.search).get('showOffer') === '1');
   const dismissed = getFromStorage(DISMISS_KEY, false);
-  const open = !dismissedForSession && ((location.pathname === ROUTES.home && !dismissed) || forcePreview);
+  const open = Boolean(offerContent) && !dismissedForSession && (
+    (location.pathname === ROUTES.home && (isMobileHome || !dismissed)) || forcePreview
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_HOME_QUERY);
+    const updateMobileState = () => setIsMobileHome(media.matches);
+    updateMobileState();
+    media.addEventListener('change', updateMobileState);
+    return () => media.removeEventListener('change', updateMobileState);
+  }, []);
 
   useEffect(() => {
     if (!open || slides.length < 2) return undefined;
@@ -99,11 +101,10 @@ const WelcomeOfferPopup = () => {
       try {
         const offer = await getWelcomeOffer();
         if (!mounted) return;
-        const merged = getCurrentOfferContent(offer);
-        setOfferContent(merged);
-        saveToStorage(OFFER_CONTENT_KEY, merged);
+        setOfferContent(getCurrentOfferContent(offer));
       } catch (err) {
-        // Keep local fallback if API is unavailable.
+        // Do not display stale or fallback content when Firestore is unavailable.
+        setOfferContent(null);
         console.error('Failed to load popup offer from Firebase:', err);
       }
     };

@@ -116,6 +116,9 @@ const logoutAdmin = async () => {
 };
 
 const getWelcomeOffer = async () => {
+  if (!db) {
+    throw new Error('Firebase is not configured. Add the VITE_FIREBASE_* environment variables.');
+  }
   const snapshot = await getDoc(doc(db, 'offers', 'welcome'));
   if (!snapshot.exists()) return null;
   return snapshot.data();

@@ -2834,6 +2834,10 @@ img {
     background: rgba(0, 0, 0, 0.58);
   }
 
+  .modal-backdrop:has(.welcome-offer-modal) {
+    align-items: center;
+  }
+
   .modal-content {
     width: min(100%, 430px);
     max-height: min(92svh, 760px);
@@ -2852,8 +2856,8 @@ img {
     position: absolute;
     top: 8px;
     right: 8px;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     background: #fff;
     z-index: 10;
   }
@@ -2864,27 +2868,26 @@ img {
 
   .welcome-offer {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(200px, 34dvh) auto;
     max-width: 100%;
     min-height: unset;
   }
 
   .welcome-offer-modal {
-    width: min(calc(100vw - 0.75rem), 390px);
-    max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
+    width: min(80vw, 350px);
+    max-height: calc(80dvh - env(safe-area-inset-bottom));
     border-radius: 16px;
   }
 
   .welcome-offer-modal .modal-scroll-area {
-    height: calc(100svh - 2rem - env(safe-area-inset-bottom));
-    height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
-    max-height: calc(100svh - 2rem - env(safe-area-inset-bottom));
-    max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
+    height: auto;
+    max-height: calc(80svh - env(safe-area-inset-bottom));
+    max-height: calc(80dvh - env(safe-area-inset-bottom));
   }
 
   .welcome-offer-media {
     height: 100%;
-    padding: 3.25rem 0.55rem 0.55rem;
+    padding: 2.8rem 0.5rem 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2898,9 +2901,8 @@ img {
   }
 
   .welcome-offer-body {
-    max-height: 45svh;
-    max-height: 45dvh;
-    padding: 0.75rem 0.8rem max(0.8rem, env(safe-area-inset-bottom));
+    max-height: none;
+    padding: 0.65rem 0.75rem max(0.7rem, env(safe-area-inset-bottom));
   }
 
   .welcome-offer-logo {
@@ -2964,7 +2966,7 @@ img {
 
   .welcome-offer-actions .btn {
     width: 100%;
-    min-height: 42px;
+    min-height: 40px;
     justify-content: center;
   }
 
@@ -3048,7 +3050,6 @@ img {
   .layout-home .directions-header,
   .layout-home .navbar,
   .layout-home .footer,
-  .layout-home .modal-backdrop,
   .layout-home .site-mascot,
   .layout-home .desktop-home-content {
     display: none !important;
