@@ -81,5 +81,19 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
       allow create: if hasValidPromotionReminderSignupFields();
     }
+
+    // Customer database imports contain PII (name, phone, spend history), so unlike the
+    // public marketing content above, both read and write require an authenticated admin.
+    match /locations/{locationId} {
+      allow read, write: if isAdmin();
+
+      match /customers/{phoneNumber} {
+        allow read, write: if isAdmin();
+      }
+
+      match /imports/{importId} {
+        allow read, write: if isAdmin();
+      }
+    }
   }
 }

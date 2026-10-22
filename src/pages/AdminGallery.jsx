@@ -291,6 +291,7 @@ const AdminGallery = () => {
             <Button to={ROUTES.gallery} variant="ghost">Open Public Gallery</Button>
             <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
             <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
+            <Button to={ROUTES.adminCustomers} variant="secondary">Go to Customer Database</Button>
           </div>
           <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button type="button" variant="secondary" onClick={() => seedFromDefaults(false)} disabled={saving}>

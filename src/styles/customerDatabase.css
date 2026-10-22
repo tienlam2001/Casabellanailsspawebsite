@@ -1,0 +1,253 @@
+/* Customer Database (CDB) — CSV import + owner dashboard */
+
+.cdb-dropzone {
+  border: 2px dashed var(--line);
+  border-radius: 18px;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.6);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.cdb-dropzone:hover {
+  border-color: rgba(217, 168, 78, 0.55);
+}
+
+.cdb-dropzone-active {
+  border-color: var(--gold-500);
+  background: rgba(255, 224, 158, 0.25);
+}
+
+.cdb-dropzone-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cdb-preview-stats {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+  color: rgba(31, 41, 51, 0.85);
+}
+
+.cdb-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.9rem;
+}
+
+.cdb-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+}
+
+.cdb-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: 'Playfair Display', serif;
+}
+
+.cdb-stat-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(76, 85, 99, 0.85);
+  font-weight: 700;
+}
+
+.cdb-stat-new .cdb-stat-value {
+  color: #1a7f37;
+}
+
+.cdb-stat-updated .cdb-stat-value {
+  color: var(--gold-500);
+}
+
+.cdb-stat-invalid .cdb-stat-value {
+  color: #e11d48;
+}
+
+.cdb-stat-total .cdb-stat-value {
+  color: var(--sage-700);
+}
+
+.cdb-location-stats {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.6rem;
+}
+
+.cdb-summary-card {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 1.6rem;
+  box-shadow: var(--shadow-card);
+}
+
+.cdb-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.cdb-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cdb-badge-success {
+  background: rgba(26, 127, 55, 0.14);
+  color: #1a7f37;
+}
+
+.cdb-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+
+.cdb-search-input {
+  max-width: 320px;
+}
+
+.cdb-table-scroll,
+.cdb-invalid-scroll {
+  overflow-x: auto;
+  max-height: 480px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.cdb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.cdb-table th,
+.cdb-table td {
+  padding: 0.65rem 0.9rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+
+.cdb-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 248, 239, 0.96);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(76, 85, 99, 0.9);
+  z-index: 1;
+}
+
+.cdb-th-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.cdb-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cdb-row-new {
+  background: rgba(26, 127, 55, 0.08);
+}
+
+.cdb-diff-scroll {
+  max-height: 520px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 0.25rem;
+}
+
+.cdb-diff-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.cdb-diff-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.cdb-diff-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cdb-diff-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  flex-wrap: wrap;
+}
+
+.cdb-diff-field-label {
+  min-width: 90px;
+  font-weight: 700;
+  color: rgba(76, 85, 99, 0.9);
+}
+
+.cdb-diff-old {
+  background: rgba(225, 29, 72, 0.12);
+  color: #b1123f;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  text-decoration: line-through;
+}
+
+.cdb-diff-new {
+  background: rgba(26, 127, 55, 0.12);
+  color: #1a7f37;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.cdb-diff-arrow {
+  color: rgba(76, 85, 99, 0.6);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .cdb-search-input {
+    max-width: 100%;
+  }
+
+  .cdb-table th,
+  .cdb-table td {
+    padding: 0.55rem 0.6rem;
+  }
+}

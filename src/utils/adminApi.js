@@ -650,6 +650,7 @@ export {
   setAdminToken,
   loginAdmin,
   logoutAdmin,
+  ensureAdminUserAsync,
   getWelcomeOffer,
   createPromotionReminderSignup,
   getPromotionReminderSignups,

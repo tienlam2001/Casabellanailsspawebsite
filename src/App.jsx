@@ -17,8 +17,13 @@ import AdminGallery from './pages/AdminGallery';
 import AdminBlog from './pages/AdminBlog';
 import AdminPromotionReminders from './pages/AdminPromotionReminders';
 import LegalPage from './pages/LegalPage';
+import AdminCustomers from './pages/AdminCustomers';
+import AdminCustomerImport from './pages/AdminCustomerImport';
+import AdminCustomerLocation from './pages/AdminCustomerLocation';
+import AdminCustomerImportDetail from './pages/AdminCustomerImportDetail';
 import ROUTES from './constants/routes';
 import './index.css';
+import './styles/customerDatabase.css';
 
 const App = () => (
   <Layout>
@@ -40,6 +45,10 @@ const App = () => (
       <Route path={ROUTES.adminGallery} element={<AdminGallery />} />
       <Route path={ROUTES.adminBlog} element={<AdminBlog />} />
       <Route path={ROUTES.adminPromotionReminders} element={<AdminPromotionReminders />} />
+      <Route path={ROUTES.adminCustomers} element={<AdminCustomers />} />
+      <Route path={ROUTES.adminCustomerImport} element={<AdminCustomerImport />} />
+      <Route path={ROUTES.adminCustomerImportDetail} element={<AdminCustomerImportDetail />} />
+      <Route path={ROUTES.adminCustomerLocation} element={<AdminCustomerLocation />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Layout>

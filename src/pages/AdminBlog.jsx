@@ -241,6 +241,7 @@ const AdminBlog = () => {
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={ROUTES.blog} variant="ghost">Open Public Blog</Button>
             <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
+            <Button to={ROUTES.adminCustomers} variant="secondary">Go to Customer Database</Button>
           </div>
           <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button type="button" variant="secondary" onClick={() => seedFromDefaults(false)} disabled={saving}>Initialize Firebase Blog</Button>

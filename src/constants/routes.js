@@ -18,6 +18,16 @@ const ROUTES = {
   adminGallery: '/admin/gallery',
   adminBlog: '/admin/blog',
   adminPromotionReminders: '/admin/promotion-reminders',
+  adminCustomers: '/admin/customers',
+  adminCustomerImport: '/admin/customers/import',
+  adminCustomerLocation: '/admin/customers/:locationId',
+  adminCustomerImportDetail: '/admin/customers/:locationId/imports/:importId',
 };
+
+export const adminCustomerLocationPath = (locationId) => `/admin/customers/${locationId}`;
+export const adminCustomerImportPath = (locationId) =>
+  locationId ? `/admin/customers/import?location=${encodeURIComponent(locationId)}` : '/admin/customers/import';
+export const adminCustomerImportDetailPath = (locationId, importId) =>
+  `/admin/customers/${locationId}/imports/${importId}`;
 
 export default ROUTES;

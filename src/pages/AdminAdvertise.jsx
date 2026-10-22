@@ -396,6 +396,7 @@ const AdminAdvertise = () => {
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
             <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
+            <Button to={ROUTES.adminCustomers} variant="secondary">Go to Customer Database</Button>
           </div>
         </Card>
       </div>

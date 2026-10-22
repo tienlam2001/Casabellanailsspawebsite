@@ -297,6 +297,7 @@ const AdminServices = () => {
             <Button to={ROUTES.adminGallery} variant="secondary">Go to Gallery Manager</Button>
             <Button to={ROUTES.adminBlog} variant="secondary">Go to Blog Manager</Button>
             <Button to={ROUTES.adminPromotionReminders} variant="secondary">Promotion Signups</Button>
+            <Button to={ROUTES.adminCustomers} variant="secondary">Go to Customer Database</Button>
             <Button to={`${ROUTES.home}?previewOffer=1`} variant="ghost">Preview Popup</Button>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
