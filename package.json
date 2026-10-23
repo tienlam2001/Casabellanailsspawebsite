@@ -9,6 +9,7 @@
     "dev:full": "sh -c 'node server/index.js & vite'",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "node --test src/shared/*.test.js",
     "preview": "vite preview",
     "start:api": "node server/index.js"
   },

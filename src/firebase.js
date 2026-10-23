@@ -3,6 +3,9 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// Public web config for Firebase project casabellanailsspawebsite, the same
+// project Operatix and the Lovely Nail site already use. Override with
+// VITE_FIREBASE_* when needed. Never put a service account or admin token here.
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyA5Wy3Ovve7sXFeDwYDPCxKfflz5YWVzmU',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'casabellanailsspawebsite.firebaseapp.com',

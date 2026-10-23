@@ -46,6 +46,7 @@ const initialCategory = () =>
 
 const Services = () => {
   const [services, setServices] = useState(() => getVisibleServices(staticServices));
+  const [menuStatus, setMenuStatus] = useState('loading');
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [editingKey, setEditingKey] = useState('');
   const [editingPrice, setEditingPrice] = useState('');
@@ -76,10 +77,17 @@ const Services = () => {
     const load = async () => {
       try {
         const remoteServices = await getServices();
-        if (!mounted || !Array.isArray(remoteServices) || remoteServices.length === 0) return;
+        if (!mounted) return;
+        if (!Array.isArray(remoteServices) || remoteServices.length === 0) {
+          setServices([]);
+          setMenuStatus('empty');
+          return;
+        }
         setServices(getVisibleServices(remoteServices));
+        setMenuStatus('live');
       } catch {
-        // Keep static fallback on failure.
+        if (!mounted) return;
+        setMenuStatus('error');
       }
     };
 
@@ -269,6 +277,12 @@ const Services = () => {
         description="Compare services, timing, and starting prices at a glance. Every appointment can be tailored to your preferences."
         className="services-section"
       >
+        {menuStatus === 'error' ? (
+          <p className="muted">The live service menu is unavailable right now. Showing the saved Casabella menu.</p>
+        ) : null}
+        {menuStatus === 'empty' ? (
+          <p className="muted">No Casabella services are published yet. Please call the salon for the current menu.</p>
+        ) : null}
         <SmartPricingMenu services={services} />
         <div className="services-toolbar reveal reveal-delay-1">
           <label className="services-mobile-picker">

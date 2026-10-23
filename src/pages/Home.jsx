@@ -9,9 +9,11 @@ import Card from '../components/Card';
 import InstagramFeed, { INSTAGRAM_PROFILE_URL } from '../components/InstagramFeed';
 import ROUTES from '../constants/routes';
 import { setFaqJsonLd, setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
-import { getPromotions } from '../utils/adminApi';
+import { isCurrentPromotion, loadCasabellaSpecials, localDateValue } from '../utils/adminApi';
 import useServices from '../hooks/useServices';
 import MobileHomePanels from '../components/MobileHomePanels';
+import { MarketingEventList, MarketingEventsLink } from '../components/MarketingEvents';
+import useMarketingEvents from '../hooks/useMarketingEvents';
 import logo from '../assets/casalogo.png';
 import nail1 from '../assets/nails/Nail1.png';
 import nail2 from '../assets/nails/Nail2.png';
@@ -61,13 +63,6 @@ const rewardTiers = [
 
 const directionsUrl = 'https://www.google.com/maps/search/?api=1&query=2871%20Clayton%20Crossing%20Way%20%231033%2C%20Oviedo%2C%20FL%2032765';
 
-const toLocalDateValue = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const formatPromotionDate = (value) => {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
   const date = new Date(`${value}T12:00:00`);
@@ -103,11 +98,13 @@ const localFaqs = [
 ];
 
 const Home = () => {
-  const services = useServices();
+  const { services, menuStatus } = useServices();
   const [promotions, setPromotions] = useState([]);
   const [promotionsLoaded, setPromotionsLoaded] = useState(false);
+  const [promotionsError, setPromotionsError] = useState(false);
   const [showBookingPromo, setShowBookingPromo] = useState(false);
   const [bookingGateBusy, setBookingGateBusy] = useState(false);
+  const { events: marketingEvents, status: marketingStatus } = useMarketingEvents();
 
   useEffect(() => {
     setPageSeo({
@@ -126,10 +123,13 @@ const Home = () => {
     let mounted = true;
     const loadPromotions = async () => {
       try {
-        const items = await getPromotions();
+        const { items } = await loadCasabellaSpecials();
         if (mounted) setPromotions(items);
       } catch {
-        if (mounted) setPromotions([]);
+        if (mounted) {
+          setPromotions([]);
+          setPromotionsError(true);
+        }
       } finally {
         if (mounted) setPromotionsLoaded(true);
       }
@@ -190,12 +190,8 @@ const Home = () => {
   const featuredServices = services.slice(0, 4);
   const latestPosts = posts.slice(0, 3);
   const activePromotion = useMemo(() => {
-    const today = toLocalDateValue(new Date());
-    return promotions.find((promotion) => (
-      promotion.isActive &&
-      promotion.startDate <= today &&
-      promotion.endDate >= today
-    ));
+    const today = localDateValue();
+    return promotions.find((promotion) => isCurrentPromotion(promotion, today));
   }, [promotions]);
 
   const continueToBooking = () => {
@@ -203,12 +199,8 @@ const Home = () => {
   };
 
   const findActivePromotion = (items) => {
-    const today = toLocalDateValue(new Date());
-    return items.find((promotion) => (
-      promotion.isActive &&
-      promotion.startDate <= today &&
-      promotion.endDate >= today
-    ));
+    const today = localDateValue();
+    return items.find((promotion) => isCurrentPromotion(promotion, today));
   };
 
   const handleMobileBooking = async (event) => {
@@ -223,7 +215,7 @@ const Home = () => {
 
     setBookingGateBusy(true);
     try {
-      const items = await getPromotions();
+      const { items } = await loadCasabellaSpecials();
       setPromotions(items);
       setPromotionsLoaded(true);
       const nextActivePromotion = findActivePromotion(items);
@@ -264,10 +256,12 @@ const Home = () => {
             <a className="mobile-app-action mobile-app-action-primary" href={ROUTES.bookingExternal} onClick={handleMobileBooking} aria-busy={bookingGateBusy}>
               {bookingGateBusy ? 'Checking Offers...' : 'Book Online'}
             </a>
+            {promotionsError ? <p className="mobile-app-welcome">Offers could not be loaded. Booking is still available.</p> : null}
             <button type="button" className="mobile-app-action" data-mobile-panel="pricing">
               Smart Pricing Menu
             </button>
             <button type="button" className="mobile-app-action" data-mobile-panel="gallery">Gallery</button>
+            <MarketingEventsLink status={marketingStatus} />
             <a className="mobile-app-action" href="tel:+13214446297">
               Call Us
             </a>
@@ -305,9 +299,11 @@ const Home = () => {
               <h2 id="mobile-booking-promo-title">{activePromotion.title}</h2>
               {activePromotion.offer ? <p className="mobile-booking-promo-offer">{activePromotion.offer}</p> : null}
               <p className="mobile-booking-promo-description">{activePromotion.description}</p>
-              <p className="mobile-booking-promo-validity">
-                Valid {formatPromotionDate(activePromotion.startDate)} - {formatPromotionDate(activePromotion.endDate)}
-              </p>
+              {activePromotion.startDate && activePromotion.endDate ? (
+                <p className="mobile-booking-promo-validity">
+                  Valid {formatPromotionDate(activePromotion.startDate)} - {formatPromotionDate(activePromotion.endDate)}
+                </p>
+              ) : null}
               <button type="button" className="mobile-booking-promo-primary" onClick={handleContinueToBooking} disabled={bookingGateBusy}>
                 {bookingGateBusy ? 'Opening...' : 'Continue to Booking'}
               </button>
@@ -363,6 +359,12 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {marketingStatus === 'ready' ? (
+        <Section id="home-events" className="home-events">
+          <MarketingEventList events={marketingEvents} />
+        </Section>
+      ) : null}
 
       <section id="rewards" className="rewards-section" aria-labelledby="rewards-heading">
         <div className="container rewards-grid">
@@ -503,6 +505,12 @@ const Home = () => {
         title="Beautiful nails, thoughtfully executed"
         description="Explore client favorites—from immaculate gel manicures to spa pedicures crafted to relax."
       >
+        {menuStatus === 'error' ? (
+          <p className="muted">The live service menu is unavailable right now. Showing the saved Casabella menu.</p>
+        ) : null}
+        {menuStatus === 'empty' ? (
+          <p className="muted">No Casabella services are published yet. Please call the salon for the current menu.</p>
+        ) : null}
         <div className="grid-2">
           {featuredServices.map((service) => (
             <Card key={service.name} className="reveal">

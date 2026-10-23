@@ -28,9 +28,8 @@ service cloud.firestore {
         && request.resource.data.endDate.matches('^\\d{4}-\\d{2}-\\d{2}$');
     }
 
-    function hasValidPromotionReminderSignupFields() {
-      return request.resource.data.keys().hasOnly(['firstName', 'lastName', 'email', 'phone', 'smsConsent', 'consentVersion', 'optInSource', 'createdAt'])
-        && request.resource.data.firstName is string
+    function hasPromotionReminderIdentity() {
+      return request.resource.data.firstName is string
         && request.resource.data.firstName.size() > 0
         && request.resource.data.firstName.size() <= 80
         && request.resource.data.lastName is string
@@ -50,6 +49,79 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
     }
 
+    function hasValidPromotionReminderSignupFields() {
+      return request.resource.data.keys().hasOnly(['firstName', 'lastName', 'email', 'phone', 'smsConsent', 'consentVersion', 'optInSource', 'createdAt'])
+        && hasPromotionReminderIdentity();
+    }
+
+    function hasSharedPromotionReminderSignupFields() {
+      return request.resource.data.keys().hasOnly(['firstName', 'lastName', 'name', 'email', 'phone', 'smsConsent', 'consentVersion', 'optInSource', 'salonname', 'location', 'source', 'source_type', 'createdAt'])
+        && hasPromotionReminderIdentity()
+        && request.resource.data.name == request.resource.data.firstName + ' ' + request.resource.data.lastName
+        && request.resource.data.salonname == 'Casabella Nails And Spa'
+        && request.resource.data.location == 'casabella'
+        && request.resource.data.source == 'casabellanailspaoviedo.com'
+        && request.resource.data.source_type == 'promotion-signup';
+    }
+
+    function hasWebsiteLeadIdentity() {
+      return request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 7
+        && request.resource.data.phone.size() <= 32
+        && request.resource.data.phone.matches('^\\+?[0-9\\s().-]{7,32}$')
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 160
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 2000
+        && request.resource.data.salonname == 'Casabella Nails And Spa'
+        && request.resource.data.location == 'casabella'
+        && request.resource.data.source == 'casabellanailspaoviedo.com'
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function hasValidContactLead() {
+      return request.resource.data.keys().hasOnly(['name', 'phone', 'email', 'message', 'salonname', 'location', 'source', 'source_type', 'createdAt'])
+        && request.resource.data.source_type == 'contact'
+        && request.resource.data.message.size() > 0
+        && hasWebsiteLeadIdentity();
+    }
+
+    function hasValidLovelyPromotionSignupFields() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'phone', 'email', 'emailConsent', 'smsConsent', 'consentText', 'smsConsentText', 'consentVersion', 'salonname', 'source', 'createdAt'])
+        && data.keys().hasOnly(['name', 'phone', 'email', 'emailConsent', 'smsConsent', 'consentText', 'smsConsentText', 'consentVersion', 'salonname', 'source', 'createdAt'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 32
+        && data.phone.matches('^\\+?[0-9\\s().-]{7,32}$')
+        && data.email is string && data.email.size() > 3 && data.email.size() <= 160
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.emailConsent == true && data.smsConsent is bool
+        && data.consentText == 'I agree to receive promotional emails from Lovely Nail & Spa. I can withdraw my consent by contacting the salon.'
+        && data.smsConsentText == (data.smsConsent ? 'I also agree to receive promotional text messages from Lovely Nail & Spa. Consent is not a condition of purchase. Message and data rates may apply. Reply STOP to opt out.' : '')
+        && data.consentVersion == '2026-10-06'
+        && data.salonname == 'Lovely Nail & Spa'
+        && data.source == 'nailslovely.com'
+        && data.createdAt is timestamp;
+    }
+
+    function hasValidBookingLead() {
+      return request.resource.data.keys().hasOnly(['name', 'phone', 'email', 'message', 'salonname', 'location', 'source', 'source_type', 'createdAt', 'preferredDate', 'preferredTime', 'serviceCategory'])
+        && request.resource.data.source_type == 'booking'
+        && request.resource.data.preferredDate is string
+        && request.resource.data.preferredDate.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && request.resource.data.preferredTime is string
+        && request.resource.data.preferredTime.matches('^\\d{2}:\\d{2}$')
+        && request.resource.data.serviceCategory is string
+        && request.resource.data.serviceCategory.size() > 0
+        && request.resource.data.serviceCategory.size() <= 80
+        && hasWebsiteLeadIdentity();
+    }
+
     match /offers/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
@@ -62,7 +134,28 @@ service cloud.firestore {
     }
 
     match /galleryImages/{document=**} {
+      allow read: if resource.data.isPublic == true;
+      allow write: if isAdmin();
+    }
+
+    // Operatix Gallery Manager writes here. Public read is required for the
+    // websites; each site filters salonname in the client.
+    match /gallery/{document=**} {
       allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /lovelyNailServices/{document=**} {
+      allow read: if true;
+      allow create, update: if isAdmin() && hasValidServiceFields();
+      allow delete: if isAdmin();
+    }
+
+    // Public reads succeed only for documents with isPublic == true.
+    // Guest queries must include that filter. The composite index is
+    // location + isPublic + startDate.
+    match /marketingEvents/{eventId} {
+      allow read: if resource.data.isPublic == true;
       allow write: if isAdmin();
     }
 
@@ -79,7 +172,29 @@ service cloud.firestore {
 
     match /promotionReminderSignups/{document=**} {
       allow read, update, delete: if isAdmin();
-      allow create: if hasValidPromotionReminderSignupFields();
+      allow create: if hasValidPromotionReminderSignupFields() || hasSharedPromotionReminderSignupFields();
+    }
+
+    // Public contact and booking requests. Operatix Firebase Alerts should
+    // include this collection so new Casabella leads show up for the owner.
+    match /websiteLeads/{document=**} {
+      allow read, update, delete: if isAdmin();
+      allow create: if hasValidContactLead() || hasValidBookingLead();
+    }
+
+    // Lovely Nail site signup. Kept here so deploying this shared file does
+    // not remove the sister site's create rule. Do not widen these checks.
+    match /lovelyNailPromotionList/{signupId} {
+      allow create: if hasValidLovelyPromotionSignupFields()
+        && request.resource.data.createdAt == request.time;
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin() && hasValidLovelyPromotionSignupFields()
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /salonHours/{loc} {
+      allow get, list: if true;
+      allow write: if false;
     }
   }
 }

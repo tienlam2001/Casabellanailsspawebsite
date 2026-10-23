@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Section from '../components/Section';
 import Button from '../components/Button';
 import FormField from '../components/FormField';
+import MarketingEvents from '../components/MarketingEvents';
 import ROUTES from '../constants/routes';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
@@ -9,7 +11,7 @@ import {
   createPromotion,
   deletePromotion,
   getAdminToken,
-  getPromotions,
+  loadCasabellaSpecials,
   logoutAdmin,
   setAdminToken,
   updatePromotion,
@@ -55,16 +57,23 @@ const formatDate = (value) => {
 };
 
 const promotionState = (promotion, today) => {
-  if (promotion.endDate < today) return 'Expired';
+  if (promotion.endDate && promotion.endDate < today) return 'Expired';
   if (!promotion.isActive) return 'Inactive';
-  if (promotion.startDate > today) return 'Upcoming';
+  if (promotion.startDate && promotion.startDate > today) return 'Upcoming';
   return 'Active';
 };
 
-const PromotionCard = ({ promotion, today, isAdmin, onEdit, onDelete, busy }) => {
+const isNotExpired = (promotion, today) => !promotion.endDate || promotion.endDate >= today;
+
+const PromotionCard = ({ promotion, today, isAdmin, onEdit, onDelete, busy, linkedOffer }) => {
   const state = promotionState(promotion, today);
+  const offerId = promotion.offerId || (promotion.source === 'offers' ? promotion.id : '');
+  const linked = Boolean(linkedOffer) && offerId === linkedOffer;
   return (
-    <article className="promotion-card">
+    <article
+      className={`promotion-card${linked ? ' promotion-card-linked' : ''}`}
+      data-offer-id={offerId || undefined}
+    >
       <div className="promotion-card-media">
         {promotion.imageUrl ? (
           <img src={promotion.imageUrl} alt={`${promotion.title} promotion`} />
@@ -78,10 +87,14 @@ const PromotionCard = ({ promotion, today, isAdmin, onEdit, onDelete, busy }) =>
         <h2 className="promotion-card-title">{promotion.title}</h2>
         {promotion.offer ? <p className="promotion-offer">{promotion.offer}</p> : null}
         <p className="promotion-description">{promotion.description}</p>
-        <p className="promotion-dates">
-          {formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}
-        </p>
-        {isAdmin ? (
+        {promotion.startDate || promotion.endDate ? (
+          <p className="promotion-dates">
+            {formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}
+          </p>
+        ) : (
+          <p className="promotion-dates">Current Casabella offer</p>
+        )}
+        {isAdmin && !promotion.readOnly ? (
           <div className="promotion-card-actions">
             <Button type="button" variant="secondary" onClick={() => onEdit(promotion)} disabled={busy}>
               Edit
@@ -107,6 +120,8 @@ const Promotions = () => {
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [searchParams] = useSearchParams();
+  const linkedOffer = searchParams.get('offer') || '';
   const today = toLocalDateValue(new Date());
   const isAdmin = Boolean(session?.loggedIn && getAdminToken());
 
@@ -126,8 +141,11 @@ const Promotions = () => {
     let mounted = true;
     const loadPromotions = async () => {
       try {
-        const items = await getPromotions();
-        if (mounted) setPromotions(items);
+        const { items, partialError } = await loadCasabellaSpecials();
+        if (mounted) {
+          setPromotions(items);
+          if (partialError) setError('Some offers could not be loaded. Showing the Casabella offers that are available.');
+        }
       } catch (err) {
         if (mounted) {
           const message = err?.code === 'permission-denied'
@@ -148,11 +166,20 @@ const Promotions = () => {
   const groups = useMemo(() => {
     const visible = isAdmin ? promotions : promotions.filter((item) => item.isActive);
     return {
-      current: visible.filter((item) => item.isActive && item.endDate >= today),
-      inactive: isAdmin ? visible.filter((item) => !item.isActive && item.endDate >= today) : [],
-      expired: visible.filter((item) => item.endDate < today),
+      current: visible.filter((item) => item.isActive && isNotExpired(item, today)),
+      inactive: isAdmin ? visible.filter((item) => !item.isActive && isNotExpired(item, today)) : [],
+      expired: visible.filter((item) => item.endDate && item.endDate < today),
     };
   }, [isAdmin, promotions, today]);
+
+  useEffect(() => {
+    if (loading || window.location.hash !== '#current-offers') return;
+    const section = document.getElementById('current-offers');
+    const card = linkedOffer && section
+      ? section.querySelector(`[data-offer-id="${CSS.escape(linkedOffer)}"]`)
+      : null;
+    (card || section)?.scrollIntoView({ block: 'start' });
+  }, [loading, linkedOffer, promotions]);
 
   const clearMessages = () => {
     setNotice('');
@@ -358,7 +385,9 @@ const Promotions = () => {
         {!showManager && notice ? <p className="promotion-notice">{notice}</p> : null}
         {!showManager && error ? <p className="field-error promotion-form-error">{error}</p> : null}
 
-        <div className="promotion-list-section">
+        <MarketingEvents />
+
+        <div className="promotion-list-section" id="current-offers">
           <div className="promotion-list-heading">
             <div>
               <p className="eyebrow">Available Now</p>
@@ -368,7 +397,7 @@ const Promotions = () => {
           </div>
           {loading ? <p className="promotion-empty">Loading promotions...</p> : groups.current.length > 0 ? (
             <div className="promotion-grid">
-              {groups.current.map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} today={today} isAdmin={isAdmin} onEdit={handleEdit} onDelete={handleDelete} busy={saving} />)}
+              {groups.current.map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} today={today} isAdmin={isAdmin} onEdit={handleEdit} onDelete={handleDelete} busy={saving} linkedOffer={linkedOffer} />)}
             </div>
           ) : (
             <div className="promotion-empty">No active promotions right now. Check back soon for the next Casabella special.</div>

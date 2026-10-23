@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Button from './Button';
+import SalonHours from './SalonHours';
 import ROUTES from '../constants/routes';
 
 const Footer = () => (
@@ -36,11 +37,7 @@ const Footer = () => (
           <h3 className="eyebrow" style={{ marginBottom: '0.5rem' }}>
             Hours
           </h3>
-          <p className="muted">
-            Mon–Fri: 9:30a – 7:00p <br />
-            Sat: 9:30a – 6:00p <br />
-            Sun: 11:00a – 5:00p
-          </p>
+          <SalonHours />
         </div>
         <div>
           <h3 className="eyebrow" style={{ marginBottom: '0.5rem' }}>

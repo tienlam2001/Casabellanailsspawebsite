@@ -5,17 +5,28 @@ import { getDefaultGallery } from '../utils/defaultGallery';
 export default function MobileGallery() {
   const [images, setImages] = useState(getDefaultGallery);
   const [filter, setFilter] = useState('All');
+  const [galleryStatus, setGalleryStatus] = useState('loading');
   useEffect(() => {
     let mounted = true;
     getGalleryImages().then((items) => {
-      if (mounted && items?.length) setImages(items.map((item) => ({ ...item, src: item.imageUrl || item.src })));
-    }).catch(() => {});
+      if (!mounted) return;
+      if (items?.length) {
+        setImages(items.map((item) => ({ ...item, src: item.imageUrl || item.src })));
+        setGalleryStatus('live');
+        return;
+      }
+      setGalleryStatus('empty');
+    }).catch(() => {
+      if (mounted) setGalleryStatus('error');
+    });
     return () => { mounted = false; };
   }, []);
   const categories = ['All', ...new Set(images.map((image) => image.category).filter(Boolean))];
   const visible = filter === 'All' ? images : images.filter((image) => image.category === filter);
   return <div className="mobile-gallery">
     <p>Find your next look. Tap a photo to see the full image.</p>
+    {galleryStatus === 'error' ? <p role="status">The live gallery is unavailable. Showing saved Casabella photos.</p> : null}
+    {galleryStatus === 'empty' ? <p role="status">No live Casabella photos yet. Showing saved salon photos.</p> : null}
     <div className="mobile-gallery-filters" aria-label="Photo categories">
       {categories.map((category) => <button type="button" key={category} aria-pressed={category === filter} onClick={() => setFilter(category)}>{category}</button>)}
     </div>
