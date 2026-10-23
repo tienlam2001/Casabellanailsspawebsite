@@ -26,6 +26,7 @@ import {
   salonDate,
   visibleMarketingEvents,
 } from '../shared/marketingEvents';
+import { GALLERY_LOCATIONS, normalizeGalleryImage, sortGalleryImages } from '../shared/galleryImages';
 import { normalizeTimeZone, resolveSalonHours, salonDateInZone } from '../shared/salonHours';
 import {
   CASABELLA,
@@ -353,43 +354,65 @@ const seedServicesCollection = async (services, { overwrite = false } = {}) => {
   return getServices();
 };
 
-const normalizeGalleryItem = (id, item) => ({
-  id,
-  imageUrl: safeAssetUrl(item?.imageUrl),
-  alt: String(item?.alt || item?.title || '').trim(),
-  category: String(item?.category || (Array.isArray(item?.tags) ? item.tags[0] : '') || 'Salon').trim(),
-  salonname: String(item?.salonname || '').trim(),
-  location: String(item?.location || '').trim(),
-});
+const mapGalleryDocs = (snapshot) => snapshot.docs
+  .map((docItem) => normalizeGalleryImage(docItem.id, docItem.data()))
+  .filter(Boolean);
 
-const galleryDocs = (snapshot, allowUnlabeled) => snapshot.docs
-  .map((docItem) => normalizeGalleryItem(docItem.id, docItem.data()))
-  .filter((item) => item.imageUrl && recordMatchesCasabella(item, { allowUnlabeled }));
+const readPublicGalleryImages = async (database) => mapGalleryDocs(await getDocs(query(
+  collection(database, 'galleryImages'),
+  where('location', 'in', GALLERY_LOCATIONS),
+  where('isPublic', '==', true),
+  orderBy('sortOrder'),
+)));
+
+// Documents saved before isPublic/location/sortOrder still have salonname and alt.
+// That unfiltered read fails once rules allow public read only for isPublic == true.
+const readLegacyGalleryImages = async (database) => mapGalleryDocs(
+  await getDocs(collection(database, 'galleryImages')),
+);
+
+const combineGalleryImages = (groups) => {
+  const seen = new Set();
+  const images = [];
+  for (const item of groups.flat()) {
+    if (!item?.imageUrl || seen.has(item.imageUrl)) continue;
+    seen.add(item.imageUrl);
+    images.push(item);
+  }
+  return sortGalleryImages(images);
+};
 
 const getGalleryImages = async () => {
   const database = requireDb();
-  const snapshot = await getDocs(collection(database, 'galleryImages'));
-  const images = galleryDocs(snapshot, true);
+  let published = [];
+  let publishedError = null;
   try {
-    const managed = await getDocs(collection(database, 'gallery'));
-    const seen = new Set(images.map((item) => item.imageUrl));
-    for (const item of galleryDocs(managed, false)) {
-      if (seen.has(item.imageUrl)) continue;
-      seen.add(item.imageUrl);
-      images.push(item);
-    }
+    published = await readPublicGalleryImages(database);
   } catch (error) {
-    if (error?.code !== 'permission-denied') throw error;
+    publishedError = error;
   }
-  return images;
+
+  let legacy = [];
+  try {
+    legacy = await readLegacyGalleryImages(database);
+  } catch (error) {
+    if (error?.code !== 'permission-denied' && !published.length) throw (publishedError || error);
+  }
+
+  if (!published.length && !legacy.length && publishedError) throw publishedError;
+  return combineGalleryImages([published, legacy]);
 };
 
 const createGalleryImage = async (payload) => {
   await ensureAdminUserAsync();
+  const alt = String(payload.alt || payload.caption || '').trim();
   await addDoc(collection(requireDb(), 'galleryImages'), {
     imageUrl: String(payload.imageUrl || '').trim(),
-    alt: String(payload.alt || '').trim(),
+    alt,
+    caption: alt,
     category: String(payload.category || '').trim(),
+    isPublic: true,
+    sortOrder: Number.isFinite(Number(payload.sortOrder)) ? Number(payload.sortOrder) : 0,
     ...casabellaFields(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -399,10 +422,14 @@ const createGalleryImage = async (payload) => {
 
 const updateGalleryImage = async (id, payload) => {
   await ensureAdminUserAsync();
+  const alt = String(payload.alt || payload.caption || '').trim();
   await updateDoc(doc(db, 'galleryImages', id), {
     imageUrl: String(payload.imageUrl || '').trim(),
-    alt: String(payload.alt || '').trim(),
+    alt,
+    caption: alt,
     category: String(payload.category || '').trim(),
+    isPublic: true,
+    ...casabellaFields(),
     updatedAt: serverTimestamp(),
   });
   return getGalleryImages();
@@ -444,7 +471,10 @@ const seedGalleryCollection = async (items, { overwrite = false } = {}) => {
     batch.set(doc(db, 'galleryImages', docId), {
       imageUrl,
       alt,
+      caption: alt,
       category,
+      isPublic: true,
+      sortOrder: index,
       ...casabellaFields(),
       updatedAt: serverTimestamp(),
       ...(overwrite ? { createdAt: serverTimestamp() } : {}),

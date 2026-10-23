@@ -134,7 +134,7 @@ service cloud.firestore {
     }
 
     match /galleryImages/{document=**} {
-      allow read: if true;
+      allow read: if resource.data.isPublic == true;
       allow write: if isAdmin();
     }
 
