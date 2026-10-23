@@ -22,17 +22,19 @@ Location matching uses Operatix's own rule: lowercase the name, ignore "and", "s
 | Gallery | `galleryImages`, then `gallery` when publicly readable | `salonname` is Casabella. `imageUrl` must be HTTPS or a same-site path. |
 | Contact and booking requests | `websiteLeads` | Writes `name`, `phone`, `email`, `message`, `salonname`, `location: casabella`, `source`, and `source_type` (`contact` or `booking`). |
 | Text-reminder signups | `promotionReminderSignups` | Same fields as before, plus `name`, `salonname`, `location`, `source`, and `source_type: promotion-signup` after the rules below are deployed. |
+| Upcoming events | `marketingEvents` | `location` is `casabella` or `all`, and `isPublic` is true. Ordered by `startDate`. Shown on the home page and promotions page while the last day (`endDate`, or `startDate` when there is no end) is today or later in America/New_York. An `offerId` links to that offer. Internal notes stay off the site. |
 
-Empty offers stay hidden. The site does not invent a discount when Operatix has no active Casabella offer. If the menu or gallery cannot be reached, the saved on-site menu and photos remain, with a short notice. Contact and booking show an error instead of a fake success when the lead cannot be saved.
+Empty offers and empty event lists stay hidden. A failed events query hides the section and leaves the rest of the page up. The site does not invent a discount when Operatix has no active Casabella offer. If the menu or gallery cannot be reached, the saved on-site menu and photos remain, with a short notice. Contact and booking show an error instead of a fake success when the lead cannot be saved.
 
 ### What the owner sets in Operatix
 
 - Offers: choose Casabella and save. The public site reads `offers` where `location` is `casabella`. Set `enabled` to false to hide an offer. AI slide images should be HTTPS `imageUrl` values.
+- Marketing events: save a public event with `location` `casabella` or `all`, `isPublic: true`, and `startDate`. Set `offerId` to the offer document id (for Casabella, `welcome`) when the event should link to that offer. Leave `isPublic` false to keep an event off the website. The query needs the composite index on `location`, `isPublic`, and `startDate`.
 - Services and gallery: set `salonname` to `Casabella Nails And Spa`. Photos in the Gallery Manager `gallery` collection are not publicly readable today; publish guest photos in `galleryImages` with that salon name.
 - Firebase Alerts: include `websiteLeads` and `promotionReminderSignups` in `checkFirebaseRecords` if new leads do not appear. The Operatix source repository was not publicly readable, so that scanner list could not be confirmed. Alerts already display `name`, `phone`, `email`, `salonname`, and `source_type`.
-- Deploy `firestore.rules` from this repo before relying on new contact, booking, or labeled reminder signups. Compare it with the live rules first and keep any extra collections already in production. This file includes Casabella `websiteLeads`, the existing reminder signup, public read for `gallery` and `lovelyNailServices`, and the Lovely `lovelyNailPromotionList` create rule.
+- Deploy `firestore.rules` from this repo before relying on new contact, booking, or labeled reminder signups. Compare it with the live rules first and keep any extra collections already in production. This file includes Casabella `websiteLeads`, the existing reminder signup, public read for `gallery`, public read of `marketingEvents` only where `isPublic` is true, validated admin writes for `lovelyNailServices`, and the Lovely `lovelyNailPromotionList` create rule. `firestore.indexes.json` records the `marketingEvents` index on `location`, `isPublic`, and `startDate`.
 
-Public visitors can read offers, services, gallery images, and promotions. They can create only validated Casabella leads and reminder signups. They cannot read or edit those submissions. Admin edits still require the Firebase Auth custom claim `admin: true`. No service-account key is used by the website.
+Public visitors can read offers, services, gallery images, promotions, and public marketing events. They can create only validated Casabella leads and reminder signups. They cannot read or edit those submissions, and they cannot read marketing events that are not public. Admin edits still require the Firebase Auth custom claim `admin: true`. No service-account key is used by the website.
 
 ## Firebase admin setup
 - This app now uses Firebase Authentication + Firestore for admin login and content editing.

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Section from '../components/Section';
 import Button from '../components/Button';
 import FormField from '../components/FormField';
+import MarketingEvents from '../components/MarketingEvents';
 import ROUTES from '../constants/routes';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
@@ -63,10 +65,15 @@ const promotionState = (promotion, today) => {
 
 const isNotExpired = (promotion, today) => !promotion.endDate || promotion.endDate >= today;
 
-const PromotionCard = ({ promotion, today, isAdmin, onEdit, onDelete, busy }) => {
+const PromotionCard = ({ promotion, today, isAdmin, onEdit, onDelete, busy, linkedOffer }) => {
   const state = promotionState(promotion, today);
+  const offerId = promotion.offerId || (promotion.source === 'offers' ? promotion.id : '');
+  const linked = Boolean(linkedOffer) && offerId === linkedOffer;
   return (
-    <article className="promotion-card">
+    <article
+      className={`promotion-card${linked ? ' promotion-card-linked' : ''}`}
+      data-offer-id={offerId || undefined}
+    >
       <div className="promotion-card-media">
         {promotion.imageUrl ? (
           <img src={promotion.imageUrl} alt={`${promotion.title} promotion`} />
@@ -113,6 +120,8 @@ const Promotions = () => {
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [searchParams] = useSearchParams();
+  const linkedOffer = searchParams.get('offer') || '';
   const today = toLocalDateValue(new Date());
   const isAdmin = Boolean(session?.loggedIn && getAdminToken());
 
@@ -162,6 +171,15 @@ const Promotions = () => {
       expired: visible.filter((item) => item.endDate && item.endDate < today),
     };
   }, [isAdmin, promotions, today]);
+
+  useEffect(() => {
+    if (loading || window.location.hash !== '#current-offers') return;
+    const section = document.getElementById('current-offers');
+    const card = linkedOffer && section
+      ? section.querySelector(`[data-offer-id="${CSS.escape(linkedOffer)}"]`)
+      : null;
+    (card || section)?.scrollIntoView({ block: 'start' });
+  }, [loading, linkedOffer, promotions]);
 
   const clearMessages = () => {
     setNotice('');
@@ -367,7 +385,9 @@ const Promotions = () => {
         {!showManager && notice ? <p className="promotion-notice">{notice}</p> : null}
         {!showManager && error ? <p className="field-error promotion-form-error">{error}</p> : null}
 
-        <div className="promotion-list-section">
+        <MarketingEvents />
+
+        <div className="promotion-list-section" id="current-offers">
           <div className="promotion-list-heading">
             <div>
               <p className="eyebrow">Available Now</p>
@@ -377,7 +397,7 @@ const Promotions = () => {
           </div>
           {loading ? <p className="promotion-empty">Loading promotions...</p> : groups.current.length > 0 ? (
             <div className="promotion-grid">
-              {groups.current.map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} today={today} isAdmin={isAdmin} onEdit={handleEdit} onDelete={handleDelete} busy={saving} />)}
+              {groups.current.map((promotion) => <PromotionCard key={promotion.id} promotion={promotion} today={today} isAdmin={isAdmin} onEdit={handleEdit} onDelete={handleDelete} busy={saving} linkedOffer={linkedOffer} />)}
             </div>
           ) : (
             <div className="promotion-empty">No active promotions right now. Check back soon for the next Casabella special.</div>

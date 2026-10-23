@@ -12,6 +12,8 @@ import { setFaqJsonLd, setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import { isCurrentPromotion, loadCasabellaSpecials, localDateValue } from '../utils/adminApi';
 import useServices from '../hooks/useServices';
 import MobileHomePanels from '../components/MobileHomePanels';
+import { MarketingEventList, MarketingEventsLink } from '../components/MarketingEvents';
+import useMarketingEvents from '../hooks/useMarketingEvents';
 import logo from '../assets/casalogo.png';
 import nail1 from '../assets/nails/Nail1.png';
 import nail2 from '../assets/nails/Nail2.png';
@@ -102,6 +104,7 @@ const Home = () => {
   const [promotionsError, setPromotionsError] = useState(false);
   const [showBookingPromo, setShowBookingPromo] = useState(false);
   const [bookingGateBusy, setBookingGateBusy] = useState(false);
+  const { events: marketingEvents, status: marketingStatus } = useMarketingEvents();
 
   useEffect(() => {
     setPageSeo({
@@ -258,6 +261,7 @@ const Home = () => {
               Smart Pricing Menu
             </button>
             <button type="button" className="mobile-app-action" data-mobile-panel="gallery">Gallery</button>
+            <MarketingEventsLink status={marketingStatus} />
             <a className="mobile-app-action" href="tel:+13214446297">
               Call Us
             </a>
@@ -355,6 +359,12 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {marketingStatus === 'ready' ? (
+        <Section id="home-events" className="home-events">
+          <MarketingEventList events={marketingEvents} />
+        </Section>
+      ) : null}
 
       <section id="rewards" className="rewards-section" aria-labelledby="rewards-heading">
         <div className="container rewards-grid">

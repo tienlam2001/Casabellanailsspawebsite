@@ -11,6 +11,7 @@ import {
   getDocs,
   orderBy,
   query,
+  where,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -18,6 +19,12 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
+import {
+  MARKETING_EVENT_LOCATIONS,
+  normalizeMarketingEvent,
+  salonDate,
+  visibleMarketingEvents,
+} from '../shared/marketingEvents';
 import {
   CASABELLA,
   isCurrentPromotion,
@@ -144,7 +151,10 @@ const getWelcomeOffer = async () => {
     .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
   if (!offers.length) return null;
 
-  const slides = offers.flatMap((offer) => offer.slides);
+  const slides = offers.flatMap((offer) => offer.slides.map((slide) => ({
+    ...slide,
+    offerId: offer.id,
+  })));
   return {
     location: CASABELLA.locationKey,
     slideDurationMs: offers[0].slideDurationMs,
@@ -523,9 +533,26 @@ const normalizePromotion = (id, item, source = 'promotions') => ({
   isActive: item?.isActive !== false && item?.enabled !== false && item?.active !== false,
   salonname: String(item?.salonname || '').trim(),
   location: String(item?.location || '').trim(),
+  offerId: String(item?.offerId || '').trim(),
   source,
   readOnly: source === 'offers',
 });
+
+// Public read is allowed only when isPublic == true, so this filter is required.
+const getPublicMarketingEvents = async () => {
+  const snapshot = await getDocs(query(
+    collection(requireDb(), 'marketingEvents'),
+    where('location', 'in', MARKETING_EVENT_LOCATIONS),
+    where('isPublic', '==', true),
+    orderBy('startDate'),
+  ));
+  return visibleMarketingEvents(
+    snapshot.docs
+      .map((docItem) => normalizeMarketingEvent(docItem.id, docItem.data()))
+      .filter(Boolean),
+    salonDate(),
+  );
+};
 
 const getPromotions = async () => {
   const snapshot = await getDocs(collection(requireDb(), 'promotions'));
@@ -797,6 +824,7 @@ export {
   loginAdmin,
   logoutAdmin,
   getWelcomeOffer,
+  getPublicMarketingEvents,
   loadCasabellaSpecials,
   isCurrentPromotion,
   localDateValue,
