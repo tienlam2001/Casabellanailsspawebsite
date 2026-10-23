@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import ROUTES from '../constants/routes';
 import { validateContact } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
+import { createWebsiteLead } from '../utils/adminApi';
 
 const initialForm = {
   fullName: '',
@@ -31,24 +32,37 @@ const Contact = () => {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setSubmitError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validation = validateContact(form);
     setErrors(validation);
+    setSubmitError('');
     if (Object.keys(validation).length) return;
 
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      await createWebsiteLead({
+        name: form.fullName,
+        phone: form.phone,
+        email: form.email,
+        message: form.message,
+        sourceType: 'contact',
+      });
       setSubmitted(true);
       setForm(initialForm);
-    }, 350);
+    } catch {
+      setSubmitError('We could not save your message. Please call (321) 444-6297 or try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -116,6 +130,7 @@ const Contact = () => {
                     placeholder="Share how we can support your visit."
                   />
                 </FormField>
+                {submitError ? <p className="field-error" role="alert" style={{ margin: 0 }}>{submitError}</p> : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center', justifyContent: 'space-between' }}>
                   <p className="muted" style={{ margin: 0 }}>
                     We reply quickly during open hours in Oviedo, Florida.

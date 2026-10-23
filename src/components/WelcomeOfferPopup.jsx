@@ -10,43 +10,15 @@ import { getWelcomeOffer } from '../utils/adminApi';
 
 const DISMISS_KEY = 'welcomeOfferDismissed:september-2026';
 const MOBILE_HOME_QUERY = '(max-width: 900px), (max-width: 1366px) and (pointer: coarse)';
-const defaultOffer = {
-  badge: 'September special',
-  kicker: 'Monday + Tuesday',
-  title: '10% Off When You Spend Over $60',
-  message: 'Enjoy 10% off Monday and Tuesday during September when your visit is over $60. Promotion updates will be sent by phone or posted later, so stay tuned.',
-  ctaLabel: 'Sign Up for Reminders',
-  ctaPath: ROUTES.promotionReminders,
-  imageUrl: '/promotions/september-special-mon-tue.svg',
-  slideDurationMs: 6500,
-  slides: [
-    {
-      badge: 'September special',
-      kicker: 'Monday + Tuesday',
-      title: '10% Off When You Spend Over $60',
-      message: 'Enjoy 10% off Monday and Tuesday during September when your visit is over $60. Promotion updates will be sent by phone or posted later, so stay tuned.',
-      ctaLabel: 'Sign Up for Reminders',
-      ctaPath: ROUTES.promotionReminders,
-      imageUrl: '/promotions/september-special-mon-tue.svg',
-    },
-  ],
-};
 
-const getCurrentOfferContent = (offer) => (offer ? { ...defaultOffer, ...offer } : null);
-
-const safePath = (value, fallback) => {
-  const s = String(value || '').trim();
-  return s.startsWith('/') ? s : fallback;
-};
-
-const normalizeSlide = (slide, fallback) => ({
-  badge: slide?.badge || fallback?.badge || defaultOffer.badge,
-  kicker: slide?.kicker || fallback?.kicker || defaultOffer.kicker,
-  title: slide?.title || fallback?.title || defaultOffer.title,
-  message: slide?.message || fallback?.message || defaultOffer.message,
-  ctaLabel: slide?.ctaLabel || fallback?.ctaLabel || defaultOffer.ctaLabel,
-  ctaPath: safePath(slide?.ctaPath || fallback?.ctaPath, defaultOffer.ctaPath),
-  imageUrl: slide?.imageUrl || '',
+const normalizeSlide = (slide) => ({
+  badge: String(slide?.badge || '').trim(),
+  kicker: String(slide?.kicker || '').trim(),
+  title: String(slide?.title || '').trim(),
+  message: String(slide?.message || '').trim(),
+  ctaLabel: String(slide?.ctaLabel || 'View More Details').trim(),
+  ctaPath: String(slide?.ctaPath || ROUTES.promotions),
+  imageUrl: String(slide?.imageUrl || '').trim(),
 });
 
 const WelcomeOfferPopup = () => {
@@ -59,23 +31,23 @@ const WelcomeOfferPopup = () => {
     typeof window !== 'undefined' && window.matchMedia(MOBILE_HOME_QUERY).matches
   );
 
-  const slides = Array.isArray(offerContent?.slides) && offerContent.slides.length > 0
-    ? offerContent.slides.map((slide) => normalizeSlide(slide, offerContent))
-    : [normalizeSlide(offerContent, offerContent)];
+  const slides = Array.isArray(offerContent?.slides)
+    ? offerContent.slides.map((slide) => normalizeSlide(slide)).filter((slide) => slide.title)
+    : [];
   const slideDurationMsRaw = Number(offerContent?.slideDurationMs);
   const slideDurationMs =
     Number.isFinite(slideDurationMsRaw) && slideDurationMsRaw >= 1000 && slideDurationMsRaw <= 60000
       ? Math.round(slideDurationMsRaw)
-      : 5000;
-  const activeSlideIndex = Math.min(slideIndex, slides.length - 1);
-  const activeSlide = slides[activeSlideIndex] || defaultOffer;
-  const activeImage = activeSlide.imageUrl || offerContent?.imageUrl || offerImage;
+      : 6500;
+  const activeSlideIndex = slides.length ? Math.min(slideIndex, slides.length - 1) : 0;
+  const activeSlide = slides[activeSlideIndex] || null;
+  const activeImage = activeSlide?.imageUrl || offerImage;
   const forcePreview =
     typeof window !== 'undefined' &&
     (new URLSearchParams(location.search).get('previewOffer') === '1' ||
       new URLSearchParams(location.search).get('showOffer') === '1');
   const dismissed = getFromStorage(DISMISS_KEY, false);
-  const open = Boolean(offerContent) && !dismissedForSession && (
+  const open = Boolean(activeSlide) && !dismissedForSession && (
     (location.pathname === ROUTES.home && (isMobileHome || !dismissed)) || forcePreview
   );
 
@@ -101,9 +73,9 @@ const WelcomeOfferPopup = () => {
       try {
         const offer = await getWelcomeOffer();
         if (!mounted) return;
-        setOfferContent(getCurrentOfferContent(offer));
+        setOfferContent(offer?.slides?.length ? offer : null);
       } catch (err) {
-        // Do not display stale or fallback content when Firestore is unavailable.
+        if (!mounted) return;
         setOfferContent(null);
         console.error('Failed to load popup offer from Firebase:', err);
       }
@@ -125,14 +97,14 @@ const WelcomeOfferPopup = () => {
     <Modal open={open} onClose={closePopup} className="welcome-offer-modal">
       <div className="welcome-offer">
         <div className="welcome-offer-media">
-          <img src={activeImage} alt={activeSlide.title || 'Casabella offer'} />
+          <img src={activeImage} alt={activeSlide?.title || 'Casabella offer'} />
         </div>
         <div className="welcome-offer-body">
           <img className="welcome-offer-logo" src={logo} alt="Casabella Nail and Spa logo" />
-          <div className="welcome-offer-badge">{activeSlide.badge}</div>
-          <p className="eyebrow welcome-offer-kicker">{activeSlide.kicker}</p>
-          <h2 className="welcome-offer-title">{activeSlide.title}</h2>
-          <p className="section-description welcome-offer-copy">{activeSlide.message}</p>
+          {activeSlide?.badge ? <div className="welcome-offer-badge">{activeSlide.badge}</div> : null}
+          {activeSlide?.kicker ? <p className="eyebrow welcome-offer-kicker">{activeSlide.kicker}</p> : null}
+          <h2 className="welcome-offer-title">{activeSlide?.title}</h2>
+          {activeSlide?.message ? <p className="section-description welcome-offer-copy">{activeSlide.message}</p> : null}
           {slides.length > 1 ? (
             <div className="welcome-offer-slides">
               <button
@@ -165,8 +137,8 @@ const WelcomeOfferPopup = () => {
             </div>
           ) : null}
           <div className="welcome-offer-actions">
-            <Button to={activeSlide.ctaPath || ROUTES.promotions} onClick={closePopup}>
-              {activeSlide.ctaLabel || 'View More Details'}
+            <Button to={activeSlide?.ctaPath || ROUTES.promotions} onClick={closePopup}>
+              {activeSlide?.ctaLabel || 'View More Details'}
             </Button>
             <Button variant="secondary" onClick={closePopup}>
               Maybe later

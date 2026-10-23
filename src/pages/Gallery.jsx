@@ -25,21 +25,27 @@ const Gallery = () => {
   const [filter, setFilter] = useState('All');
   const [activeImage, setActiveImage] = useState(null);
   const [remoteImages, setRemoteImages] = useState([]);
+  const [galleryStatus, setGalleryStatus] = useState('loading');
 
   useEffect(() => {
     const loadGallery = async () => {
       try {
         const list = await getGalleryImages();
-        if (Array.isArray(list)) {
+        if (Array.isArray(list) && list.length > 0) {
           setRemoteImages(
             list.map((item) => ({
               ...item,
               src: item.imageUrl || item.src,
             }))
           );
+          setGalleryStatus('live');
+          return;
         }
+        setRemoteImages([]);
+        setGalleryStatus('empty');
       } catch {
         setRemoteImages([]);
+        setGalleryStatus('error');
       }
     };
 
@@ -92,6 +98,12 @@ const Gallery = () => {
             <p className="muted" style={{ margin: 0, maxWidth: '48ch' }}>
               Tap a category to filter. Click any photo to view it full-size and share your inspo with your technician.
             </p>
+            {galleryStatus === 'error' ? (
+              <p className="muted" role="status">The live gallery is unavailable. Showing the saved Casabella photos.</p>
+            ) : null}
+            {galleryStatus === 'empty' ? (
+              <p className="muted" role="status">No Casabella photos are published yet. Showing the saved salon photos.</p>
+            ) : null}
 
             <div
               style={{

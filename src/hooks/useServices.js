@@ -5,16 +5,25 @@ import { getVisibleServices } from '../utils/serviceVisibility';
 
 const useServices = () => {
   const [services, setServices] = useState(() => getVisibleServices(staticServices));
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
         const remoteServices = await getServices();
-        if (!mounted || !Array.isArray(remoteServices) || remoteServices.length === 0) return;
+        if (!mounted) return;
+        if (!Array.isArray(remoteServices) || remoteServices.length === 0) {
+          setServices([]);
+          setStatus('empty');
+          return;
+        }
         setServices(getVisibleServices(remoteServices));
+        setStatus('live');
       } catch {
-        // Keep static fallback when API is unavailable.
+        if (!mounted) return;
+        setServices(getVisibleServices(staticServices));
+        setStatus('error');
       }
     };
 
@@ -24,7 +33,7 @@ const useServices = () => {
     };
   }, []);
 
-  return services;
+  return { services, menuStatus: status };
 };
 
 export default useServices;

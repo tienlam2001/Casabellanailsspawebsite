@@ -7,6 +7,7 @@ import ROUTES from '../constants/routes';
 import services from '../data/services.json';
 import { validateBooking } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
+import { createWebsiteLead } from '../utils/adminApi';
 
 const initialForm = {
   fullName: '',
@@ -39,30 +40,47 @@ const Booking = () => {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setSubmitError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validation = validateBooking(form);
     setErrors(validation);
+    setSubmitError('');
     if (Object.keys(validation).length) return;
 
     setSubmitting(true);
-    const entry = { ...form, createdAt: new Date().toISOString() };
-    setTimeout(() => {
+    const entry = { ...form };
+    try {
+      await createWebsiteLead({
+        name: form.fullName,
+        phone: form.phone,
+        email: form.email,
+        message: form.notes,
+        preferredDate: form.preferredDate,
+        preferredTime: form.preferredTime,
+        serviceCategory: form.serviceCategory,
+        sourceType: 'booking',
+      });
       setSubmitted(entry);
-      setSubmitting(false);
       setForm(initialForm);
-    }, 350);
+    } catch {
+      setSubmitError('We could not save your request. Please call (321) 444-6297 or try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resetForm = () => {
     setSubmitted(null);
     setErrors({});
+    setSubmitError('');
   };
 
   return (
@@ -212,6 +230,7 @@ const Booking = () => {
                     rows={4}
                   />
                 </FormField>
+                {submitError ? <p className="field-error" role="alert" style={{ margin: 0 }}>{submitError}</p> : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center', justifyContent: 'space-between' }}>
                   <p className="muted" style={{ margin: 0 }}>
                     You will receive a confirmation for Casabella Nail & Spa in Oviedo, Florida.

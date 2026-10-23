@@ -8,7 +8,6 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDoc,
   getDocs,
   orderBy,
   query,
@@ -19,6 +18,14 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
+import {
+  CASABELLA,
+  isCurrentPromotion,
+  localDateValue,
+  normalizeOfferDocument,
+  recordMatchesCasabella,
+  safeAssetUrl,
+} from '../shared/salonLocation';
 
 const ADMIN_TOKEN_KEY = 'adminAuthToken';
 const getAdminToken = () => {
@@ -115,13 +122,41 @@ const logoutAdmin = async () => {
   setAdminToken(null);
 };
 
-const getWelcomeOffer = async () => {
+const requireDb = () => {
   if (!db) {
-    throw new Error('Firebase is not configured. Add the VITE_FIREBASE_* environment variables.');
+    throw new Error('Firebase is not configured. Add the public VITE_FIREBASE_* environment variables.');
   }
-  const snapshot = await getDoc(doc(db, 'offers', 'welcome'));
-  if (!snapshot.exists()) return null;
-  return snapshot.data();
+  return db;
+};
+
+const casabellaFields = () => ({
+  salonname: CASABELLA.salonName,
+  location: CASABELLA.locationKey,
+});
+
+const getWelcomeOffer = async () => {
+  const database = requireDb();
+  const today = localDateValue();
+  const snapshot = await getDocs(collection(database, 'offers'));
+  const offers = snapshot.docs
+    .map((docItem) => normalizeOfferDocument(docItem.id, docItem.data(), today))
+    .filter(Boolean)
+    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  if (!offers.length) return null;
+
+  const slides = offers.flatMap((offer) => offer.slides);
+  return {
+    location: CASABELLA.locationKey,
+    slideDurationMs: offers[0].slideDurationMs,
+    slides,
+    badge: slides[0]?.badge || '',
+    kicker: slides[0]?.kicker || '',
+    title: slides[0]?.title || '',
+    message: slides[0]?.message || '',
+    ctaLabel: slides[0]?.ctaLabel || 'View More Details',
+    ctaPath: slides[0]?.ctaPath || '/promotions',
+    imageUrl: slides[0]?.imageUrl || '',
+  };
 };
 
 const normalizePromotionReminderSignup = (id, item) => ({
@@ -143,7 +178,7 @@ const createPromotionReminderSignup = async (payload) => {
   const phone = String(payload?.phone || '').trim();
   const smsConsent = payload?.smsConsent === true;
 
-  await addDoc(collection(db, 'promotionReminderSignups'), {
+  const legacySignup = {
     firstName,
     lastName,
     email,
@@ -152,7 +187,21 @@ const createPromotionReminderSignup = async (payload) => {
     consentVersion: 'sms-promotion-reminders-2026-10-09',
     optInSource: 'website-promotion-reminders-form',
     createdAt: serverTimestamp(),
-  });
+  };
+  const signup = {
+    ...legacySignup,
+    name: `${firstName} ${lastName}`.trim(),
+    ...casabellaFields(),
+    source: CASABELLA.source,
+    source_type: 'promotion-signup',
+  };
+
+  try {
+    await addDoc(collection(requireDb(), 'promotionReminderSignups'), signup);
+  } catch (error) {
+    if (error?.code !== 'permission-denied') throw error;
+    await addDoc(collection(requireDb(), 'promotionReminderSignups'), legacySignup);
+  }
 };
 
 const getPromotionReminderSignups = async () => {
@@ -165,9 +214,10 @@ const updateWelcomeOffer = async (offer) => {
   await ensureAdminUserAsync();
   const payload = {
     ...offer,
+    ...casabellaFields(),
     updatedAt: serverTimestamp(),
   };
-  await setDoc(doc(db, 'offers', 'welcome'), payload, { merge: true });
+  await setDoc(doc(requireDb(), 'offers', 'welcome'), payload, { merge: true });
   return offer;
 };
 
@@ -178,11 +228,16 @@ const normalizeService = (item) => ({
   category: item.category,
   priceFrom: item.priceFrom,
   key: item.key || `${item.name}::${item.category}`,
+  salonname: item.salonname || '',
+  location: item.location || '',
+  active: item.active !== false,
 });
 
 const getServices = async () => {
-  const snapshot = await getDocs(collection(db, 'services'));
-  return snapshot.docs.map((docItem) => normalizeService({ ...docItem.data() }));
+  const snapshot = await getDocs(collection(requireDb(), 'services'));
+  return snapshot.docs
+    .map((docItem) => normalizeService(docItem.data()))
+    .filter((item) => item.name && item.active && recordMatchesCasabella(item, { allowUnlabeled: true }));
 };
 
 const updateServicePrices = async (updates) => {
@@ -201,9 +256,10 @@ const updateServicePrices = async (updates) => {
     if (!serviceDoc) {
       throw new Error(`Unknown service: ${update.name} (${update.category})`);
     }
-    await updateDoc(doc(db, 'services', serviceDoc.id), {
+    await updateDoc(doc(requireDb(), 'services', serviceDoc.id), {
       priceFrom: update.priceFrom,
       key,
+      ...casabellaFields(),
       updatedAt: serverTimestamp(),
     });
   }
@@ -221,13 +277,15 @@ const createService = async (service) => {
   });
   if (exists) throw new Error('Service already exists for that name and category');
 
-  await addDoc(collection(db, 'services'), {
+  await addDoc(collection(requireDb(), 'services'), {
     name: service.name.trim(),
     shortDescription: service.shortDescription.trim(),
     duration: service.duration.trim(),
     category: service.category.trim(),
     priceFrom: service.priceFrom,
     key,
+    ...casabellaFields(),
+    active: true,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -272,6 +330,8 @@ const seedServicesCollection = async (services, { overwrite = false } = {}) => {
       category,
       priceFrom,
       key,
+      ...casabellaFields(),
+      active: true,
       updatedAt: serverTimestamp(),
       ...(overwrite ? { createdAt: serverTimestamp() } : {}),
     }, { merge: true });
@@ -283,24 +343,42 @@ const seedServicesCollection = async (services, { overwrite = false } = {}) => {
 
 const normalizeGalleryItem = (id, item) => ({
   id,
-  imageUrl: String(item?.imageUrl || '').trim(),
-  alt: String(item?.alt || '').trim(),
-  category: String(item?.category || '').trim(),
+  imageUrl: safeAssetUrl(item?.imageUrl),
+  alt: String(item?.alt || item?.title || '').trim(),
+  category: String(item?.category || (Array.isArray(item?.tags) ? item.tags[0] : '') || 'Salon').trim(),
+  salonname: String(item?.salonname || '').trim(),
+  location: String(item?.location || '').trim(),
 });
 
+const galleryDocs = (snapshot, allowUnlabeled) => snapshot.docs
+  .map((docItem) => normalizeGalleryItem(docItem.id, docItem.data()))
+  .filter((item) => item.imageUrl && recordMatchesCasabella(item, { allowUnlabeled }));
+
 const getGalleryImages = async () => {
-  const snapshot = await getDocs(collection(db, 'galleryImages'));
-  return snapshot.docs
-    .map((docItem) => normalizeGalleryItem(docItem.id, docItem.data()))
-    .filter((item) => item.imageUrl && item.category);
+  const database = requireDb();
+  const snapshot = await getDocs(collection(database, 'galleryImages'));
+  const images = galleryDocs(snapshot, true);
+  try {
+    const managed = await getDocs(collection(database, 'gallery'));
+    const seen = new Set(images.map((item) => item.imageUrl));
+    for (const item of galleryDocs(managed, false)) {
+      if (seen.has(item.imageUrl)) continue;
+      seen.add(item.imageUrl);
+      images.push(item);
+    }
+  } catch (error) {
+    if (error?.code !== 'permission-denied') throw error;
+  }
+  return images;
 };
 
 const createGalleryImage = async (payload) => {
   await ensureAdminUserAsync();
-  await addDoc(collection(db, 'galleryImages'), {
+  await addDoc(collection(requireDb(), 'galleryImages'), {
     imageUrl: String(payload.imageUrl || '').trim(),
     alt: String(payload.alt || '').trim(),
     category: String(payload.category || '').trim(),
+    ...casabellaFields(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -355,6 +433,7 @@ const seedGalleryCollection = async (items, { overwrite = false } = {}) => {
       imageUrl,
       alt,
       category,
+      ...casabellaFields(),
       updatedAt: serverTimestamp(),
       ...(overwrite ? { createdAt: serverTimestamp() } : {}),
     }, { merge: true });
@@ -432,24 +511,65 @@ const deleteBlogPost = async (id) => {
   return getBlogPosts();
 };
 
-const normalizePromotion = (id, item) => ({
+const normalizePromotion = (id, item, source = 'promotions') => ({
   id,
   title: String(item?.title || '').trim(),
-  description: String(item?.description || '').trim(),
-  offer: String(item?.offer || '').trim(),
+  description: String(item?.description || item?.message || '').trim(),
+  offer: String(item?.offer || item?.badge || item?.kicker || '').trim(),
   startDate: String(item?.startDate || '').trim(),
   endDate: String(item?.endDate || '').trim(),
-  business: String(item?.business || '').trim(),
-  imageUrl: String(item?.imageUrl || '').trim(),
-  isActive: item?.isActive !== false,
+  business: String(item?.business || CASABELLA.businessName).trim(),
+  imageUrl: safeAssetUrl(item?.imageUrl),
+  isActive: item?.isActive !== false && item?.enabled !== false && item?.active !== false,
+  salonname: String(item?.salonname || '').trim(),
+  location: String(item?.location || '').trim(),
+  source,
+  readOnly: source === 'offers',
 });
 
 const getPromotions = async () => {
-  const snapshot = await getDocs(collection(db, 'promotions'));
+  const snapshot = await getDocs(collection(requireDb(), 'promotions'));
   return snapshot.docs
     .map((docItem) => normalizePromotion(docItem.id, docItem.data()))
-    .filter((item) => item.title && item.description && item.startDate && item.endDate)
+    .filter((item) => (
+      item.title
+      && item.description
+      && item.startDate
+      && item.endDate
+      && recordMatchesCasabella(item, { allowUnlabeled: true })
+    ))
     .sort((a, b) => b.startDate.localeCompare(a.startDate));
+};
+
+const offersAsPromotions = async () => {
+  const offer = await getWelcomeOffer();
+  if (!offer?.slides?.length) return [];
+  return offer.slides.map((slide, index) => normalizePromotion(`offers-${index}`, {
+    ...slide,
+    description: slide.message,
+    offer: slide.badge || slide.kicker,
+    business: CASABELLA.businessName,
+    isActive: true,
+    location: CASABELLA.locationKey,
+    salonname: CASABELLA.salonName,
+  }, 'offers')).filter((item) => item.title);
+};
+
+const loadCasabellaSpecials = async () => {
+  const [offerResult, promotionResult] = await Promise.allSettled([
+    offersAsPromotions(),
+    getPromotions(),
+  ]);
+  const items = [];
+  if (offerResult.status === 'fulfilled') items.push(...offerResult.value);
+  if (promotionResult.status === 'fulfilled') items.push(...promotionResult.value);
+  if (!items.length && offerResult.status === 'rejected' && promotionResult.status === 'rejected') {
+    throw offerResult.reason;
+  }
+  return {
+    items,
+    partialError: offerResult.status === 'rejected' || promotionResult.status === 'rejected',
+  };
 };
 
 const promotionPayload = (payload) => ({
@@ -458,9 +578,10 @@ const promotionPayload = (payload) => ({
   offer: String(payload?.offer || '').trim(),
   startDate: String(payload?.startDate || '').trim(),
   endDate: String(payload?.endDate || '').trim(),
-  business: String(payload?.business || '').trim(),
+  business: String(payload?.business || CASABELLA.businessName).trim(),
   imageUrl: String(payload?.imageUrl || '').trim(),
   isActive: payload?.isActive !== false,
+  ...casabellaFields(),
 });
 
 const createPromotion = async (payload) => {
@@ -470,7 +591,7 @@ const createPromotion = async (payload) => {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-  return getPromotions();
+  return (await loadCasabellaSpecials()).items;
 };
 
 const updatePromotion = async (id, payload) => {
@@ -479,13 +600,13 @@ const updatePromotion = async (id, payload) => {
     ...promotionPayload(payload),
     updatedAt: serverTimestamp(),
   });
-  return getPromotions();
+  return (await loadCasabellaSpecials()).items;
 };
 
 const deletePromotion = async (id) => {
   await ensureAdminUserAsync();
   await deleteDoc(doc(db, 'promotions', id));
-  return getPromotions();
+  return (await loadCasabellaSpecials()).items;
 };
 
 const seedBlogPostsCollection = async (posts, { overwrite = false } = {}) => {
@@ -606,6 +727,31 @@ const uploadGalleryImageFile = async (file, category = 'Nails') => {
   return getDownloadURL(storageRef);
 };
 
+const createWebsiteLead = async (payload) => {
+  const name = String(payload?.name || '').trim();
+  const phone = String(payload?.phone || '').trim();
+  const email = String(payload?.email || '').trim().toLowerCase();
+  const sourceType = payload?.sourceType === 'booking' ? 'booking' : 'contact';
+  const message = String(payload?.message || '').trim() || (sourceType === 'booking' ? 'Booking request' : '');
+  const lead = {
+    name,
+    phone,
+    email,
+    message,
+    ...casabellaFields(),
+    source: CASABELLA.source,
+    source_type: sourceType,
+    createdAt: serverTimestamp(),
+  };
+  if (sourceType === 'booking') {
+    const preferredTime = String(payload?.preferredTime || '').trim();
+    lead.preferredDate = String(payload?.preferredDate || '').trim();
+    lead.preferredTime = preferredTime.length > 5 ? preferredTime.slice(0, 5) : preferredTime;
+    lead.serviceCategory = String(payload?.serviceCategory || '').trim();
+  }
+  await addDoc(collection(requireDb(), 'websiteLeads'), lead);
+};
+
 const uploadOfferImageFile = async (file) => {
   await ensureAdminUserAsync();
   if (!(file instanceof File)) {
@@ -651,6 +797,10 @@ export {
   loginAdmin,
   logoutAdmin,
   getWelcomeOffer,
+  loadCasabellaSpecials,
+  isCurrentPromotion,
+  localDateValue,
+  createWebsiteLead,
   createPromotionReminderSignup,
   getPromotionReminderSignups,
   updateWelcomeOffer,

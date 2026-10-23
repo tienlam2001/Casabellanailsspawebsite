@@ -9,7 +9,7 @@ import {
   createPromotion,
   deletePromotion,
   getAdminToken,
-  getPromotions,
+  loadCasabellaSpecials,
   logoutAdmin,
   setAdminToken,
   updatePromotion,
@@ -55,11 +55,13 @@ const formatDate = (value) => {
 };
 
 const promotionState = (promotion, today) => {
-  if (promotion.endDate < today) return 'Expired';
+  if (promotion.endDate && promotion.endDate < today) return 'Expired';
   if (!promotion.isActive) return 'Inactive';
-  if (promotion.startDate > today) return 'Upcoming';
+  if (promotion.startDate && promotion.startDate > today) return 'Upcoming';
   return 'Active';
 };
+
+const isNotExpired = (promotion, today) => !promotion.endDate || promotion.endDate >= today;
 
 const PromotionCard = ({ promotion, today, isAdmin, onEdit, onDelete, busy }) => {
   const state = promotionState(promotion, today);
@@ -78,10 +80,14 @@ const PromotionCard = ({ promotion, today, isAdmin, onEdit, onDelete, busy }) =>
         <h2 className="promotion-card-title">{promotion.title}</h2>
         {promotion.offer ? <p className="promotion-offer">{promotion.offer}</p> : null}
         <p className="promotion-description">{promotion.description}</p>
-        <p className="promotion-dates">
-          {formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}
-        </p>
-        {isAdmin ? (
+        {promotion.startDate || promotion.endDate ? (
+          <p className="promotion-dates">
+            {formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}
+          </p>
+        ) : (
+          <p className="promotion-dates">Current Casabella offer</p>
+        )}
+        {isAdmin && !promotion.readOnly ? (
           <div className="promotion-card-actions">
             <Button type="button" variant="secondary" onClick={() => onEdit(promotion)} disabled={busy}>
               Edit
@@ -126,8 +132,11 @@ const Promotions = () => {
     let mounted = true;
     const loadPromotions = async () => {
       try {
-        const items = await getPromotions();
-        if (mounted) setPromotions(items);
+        const { items, partialError } = await loadCasabellaSpecials();
+        if (mounted) {
+          setPromotions(items);
+          if (partialError) setError('Some offers could not be loaded. Showing the Casabella offers that are available.');
+        }
       } catch (err) {
         if (mounted) {
           const message = err?.code === 'permission-denied'
@@ -148,9 +157,9 @@ const Promotions = () => {
   const groups = useMemo(() => {
     const visible = isAdmin ? promotions : promotions.filter((item) => item.isActive);
     return {
-      current: visible.filter((item) => item.isActive && item.endDate >= today),
-      inactive: isAdmin ? visible.filter((item) => !item.isActive && item.endDate >= today) : [],
-      expired: visible.filter((item) => item.endDate < today),
+      current: visible.filter((item) => item.isActive && isNotExpired(item, today)),
+      inactive: isAdmin ? visible.filter((item) => !item.isActive && isNotExpired(item, today)) : [],
+      expired: visible.filter((item) => item.endDate && item.endDate < today),
     };
   }, [isAdmin, promotions, today]);
 
