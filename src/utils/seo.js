@@ -1,3 +1,5 @@
+import { fallbackOpeningHours } from '../shared/salonHours';
+
 const business = {
   name: 'Casabella Nail & Spa',
   alternateName: 'Casabella Nail Spa Oviedo',
@@ -230,7 +232,23 @@ const setPageSeo = ({ title, description, path, robots = 'index, follow', keywor
   clearJsonLd('article');
 };
 
-const localBusinessJsonLd = () => ({
+const syncStaticNailSalonHours = (openingHours) => {
+  if (typeof document === 'undefined' || !openingHours) return;
+  document.querySelectorAll('script[type="application/ld+json"]:not([data-seo-id])').forEach((script) => {
+    try {
+      const data = JSON.parse(script.textContent);
+      if (data?.['@type'] !== 'NailSalon') return;
+      data.openingHoursSpecification = openingHours;
+      script.textContent = JSON.stringify(data);
+    } catch {
+      // Leave the published fallback script in place.
+    }
+  });
+};
+
+let publishedOpeningHours = fallbackOpeningHours();
+
+const localBusinessJsonLd = (openingHours = publishedOpeningHours) => ({
   '@context': 'https://schema.org',
   '@type': 'NailSalon',
   '@id': `${absoluteUrl('/')}#nailsalon`,
@@ -271,26 +289,7 @@ const localBusinessJsonLd = () => ({
     },
   },
   areaServed: business.areaServed.map((name) => ({ '@type': 'Place', name })),
-  openingHoursSpecification: [
-    {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      opens: '09:30',
-      closes: '19:00',
-    },
-    {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: 'Saturday',
-      opens: '09:30',
-      closes: '18:00',
-    },
-    {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: 'Sunday',
-      opens: '11:00',
-      closes: '17:00',
-    },
-  ],
+  openingHoursSpecification: openingHours,
   makesOffer: [
     'Manicure',
     'Pedicure',
@@ -310,7 +309,13 @@ const localBusinessJsonLd = () => ({
   })),
 });
 
-const setLocalBusinessJsonLd = () => setJsonLd('local-business', localBusinessJsonLd());
+const setLocalBusinessJsonLd = (hours) => {
+  if (hours?.openingHoursSpecification) {
+    publishedOpeningHours = hours.openingHoursSpecification;
+  }
+  setJsonLd('local-business', localBusinessJsonLd(publishedOpeningHours));
+  syncStaticNailSalonHours(publishedOpeningHours);
+};
 
 const setFaqJsonLd = (faqs) =>
   setJsonLd('faq', {

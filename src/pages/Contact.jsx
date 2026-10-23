@@ -3,6 +3,7 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import FormField from '../components/FormField';
 import Button from '../components/Button';
+import SalonHours from '../components/SalonHours';
 import ROUTES from '../constants/routes';
 import { validateContact } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
@@ -155,25 +156,7 @@ const Contact = () => {
                 (321) 444-6297 <br />
                 oviedonail@gmail.com
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginTop: '0.75rem' }}>
-                <div>
-                  <p className="eyebrow" style={{ marginBottom: '0.2rem' }}>
-                    Weekdays
-                  </p>
-                  <p className="muted" style={{ margin: 0 }}>
-                    9:30a – 7:00p
-                  </p>
-                </div>
-                <div>
-                  <p className="eyebrow" style={{ marginBottom: '0.2rem' }}>
-                    Weekends
-                  </p>
-                  <p className="muted" style={{ margin: 0 }}>
-                    Sat 9:30a – 6:00p <br />
-                    Sun 11:00a – 5:00p
-                  </p>
-                </div>
-              </div>
+              <SalonHours variant="split" />
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.9rem' }}>
                 <Button to={ROUTES.bookingExternal}>Book Now</Button>
                 <Button to={ROUTES.services} variant="secondary">

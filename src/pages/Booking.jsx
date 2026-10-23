@@ -3,6 +3,7 @@ import Section from '../components/Section';
 import Card from '../components/Card';
 import FormField from '../components/FormField';
 import Button from '../components/Button';
+import SalonHours from '../components/SalonHours';
 import ROUTES from '../constants/routes';
 import services from '../data/services.json';
 import { validateBooking } from '../utils/validators';
@@ -267,25 +268,7 @@ const Booking = () => {
                 <a href="tel:+13214446297">(321) 444-6297</a> <br />
                 oviedonail@gmail.com
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginTop: '0.75rem' }}>
-                <div>
-                  <p className="eyebrow" style={{ marginBottom: '0.2rem' }}>
-                    Weekdays
-                  </p>
-                  <p className="muted" style={{ margin: 0 }}>
-                    9:00a – 7:00p
-                  </p>
-                </div>
-                <div>
-                  <p className="eyebrow" style={{ marginBottom: '0.2rem' }}>
-                    Weekends
-                  </p>
-                  <p className="muted" style={{ margin: 0 }}>
-                    Sat 9:00a – 6:00p <br />
-                    Sun 11:00a – 5:00p
-                  </p>
-                </div>
-              </div>
+              <SalonHours variant="split" />
             </Card>
           </div>
         </div>

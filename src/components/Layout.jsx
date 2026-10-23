@@ -4,6 +4,7 @@ import NavBar from './NavBar';
 import Footer from './Footer';
 import WelcomeOfferPopup from './WelcomeOfferPopup';
 import SiteMascot from './SiteMascot';
+import { SalonHoursProvider } from './SalonHours';
 import ROUTES from '../constants/routes';
 
 const Layout = ({ children }) => {
@@ -11,6 +12,7 @@ const Layout = ({ children }) => {
   const isHome = location.pathname === ROUTES.home;
 
   return (
+    <SalonHoursProvider>
     <div className={`layout ${isHome ? 'layout-home' : ''}`}>
       <div className="ambient-border" aria-hidden="true" />
       <DirectionsHeader />
@@ -20,6 +22,7 @@ const Layout = ({ children }) => {
       <main className="main-content">{children}</main>
       <Footer />
     </div>
+    </SalonHoursProvider>
   );
 };
 

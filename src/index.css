@@ -407,6 +407,21 @@ img {
   gap: 1.5rem;
 }
 
+.salon-hours-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.hours-notice {
+  margin: 0.7rem 0 0;
+  color: #76520c;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .footer-bottom {
   margin-top: 2rem;
   padding-top: 1.5rem;

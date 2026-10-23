@@ -8,6 +8,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -25,6 +26,7 @@ import {
   salonDate,
   visibleMarketingEvents,
 } from '../shared/marketingEvents';
+import { normalizeTimeZone, resolveSalonHours, salonDateInZone } from '../shared/salonHours';
 import {
   CASABELLA,
   isCurrentPromotion,
@@ -539,6 +541,13 @@ const normalizePromotion = (id, item, source = 'promotions') => ({
 });
 
 // Public read is allowed only when isPublic == true, so this filter is required.
+const getPublicSalonHours = async () => {
+  const snapshot = await getDoc(doc(requireDb(), 'salonHours', 'casabella'));
+  const record = snapshot.exists() ? snapshot.data() : null;
+  const timezone = normalizeTimeZone(record?.timezone);
+  return resolveSalonHours(record, salonDateInZone(new Date(), timezone));
+};
+
 const getPublicMarketingEvents = async () => {
   const snapshot = await getDocs(query(
     collection(requireDb(), 'marketingEvents'),
@@ -824,6 +833,7 @@ export {
   loginAdmin,
   logoutAdmin,
   getWelcomeOffer,
+  getPublicSalonHours,
   getPublicMarketingEvents,
   loadCasabellaSpecials,
   isCurrentPromotion,
