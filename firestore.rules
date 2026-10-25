@@ -82,6 +82,56 @@ service cloud.firestore {
       allow create: if hasValidPromotionReminderSignupFields();
     }
 
+    function hasValidLovelyPromotionSignupFields() {
+      return request.resource.data.keys().hasOnly(['name', 'phone', 'email', 'emailConsent', 'smsConsent', 'consentText', 'smsConsentText', 'consentVersion', 'salonname', 'source', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 7
+        && request.resource.data.phone.size() <= 32
+        && request.resource.data.phone.matches('^\\+?[0-9\\s().-]{7,}$')
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 160
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && request.resource.data.emailConsent == true
+        && request.resource.data.smsConsent is bool
+        && request.resource.data.consentText is string
+        && request.resource.data.consentText.size() <= 400
+        && request.resource.data.smsConsentText is string
+        && request.resource.data.smsConsentText.size() <= 400
+        && request.resource.data.consentVersion is string
+        && request.resource.data.consentVersion.size() <= 40
+        && request.resource.data.salonname == 'Lovely Nail & Spa'
+        && request.resource.data.source == 'nailslovely.com'
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // Lovely Nail & Spa keeps its own live menu and promotion-signup list in this
+    // (Casabella's) Firestore project, written directly from the Lovely site's
+    // browser code with no Firebase Auth. Both collections had no rules at all,
+    // which meant Firestore default-denied them: the live menu silently fell back
+    // to its bundled static copy, and every signup submission failed with a
+    // permission error. These two rules are the fix.
+    match /lovelyNailServices/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /lovelyNailPromotionList/{document=**} {
+      allow read, update, delete: if isAdmin();
+      allow create: if hasValidLovelyPromotionSignupFields();
+    }
+
+    // Chat messages are only ever read/written server-side (via the Base44-hosted
+    // chat function using a service account, which bypasses these rules entirely).
+    // No client ever needs direct access, so lock it down explicitly rather than
+    // relying on the implicit default-deny.
+    match /lovelyCustomerChats/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
     function hasValidBookingRequestFields() {
       return request.resource.data.keys().hasOnly(['fullName', 'phone', 'email', 'preferredDate', 'preferredTime', 'serviceCategory', 'notes', 'createdAt'])
         && request.resource.data.fullName is string
