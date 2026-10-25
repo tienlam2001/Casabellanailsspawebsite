@@ -81,5 +81,67 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
       allow create: if hasValidPromotionReminderSignupFields();
     }
+
+    function hasValidBookingRequestFields() {
+      return request.resource.data.keys().hasOnly(['fullName', 'phone', 'email', 'preferredDate', 'preferredTime', 'serviceCategory', 'notes', 'createdAt'])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 7
+        && request.resource.data.phone.size() <= 32
+        && request.resource.data.phone.matches('^\\+?[0-9\\s().-]{7,}$')
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 160
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && request.resource.data.preferredDate is string
+        && request.resource.data.preferredDate.size() <= 40
+        && request.resource.data.preferredTime is string
+        && request.resource.data.preferredTime.size() <= 40
+        && request.resource.data.serviceCategory is string
+        && request.resource.data.serviceCategory.size() <= 120
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 1000
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function hasValidContactMessageFields() {
+      return request.resource.data.keys().hasOnly(['fullName', 'phone', 'email', 'message', 'createdAt'])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 7
+        && request.resource.data.phone.size() <= 32
+        && request.resource.data.phone.matches('^\\+?[0-9\\s().-]{7,}$')
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 160
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // Inbound appointment requests and contact messages from the public Booking/Contact forms.
+    // Anyone can submit one (that's the point of the form); only the salon's admin can read or manage them.
+    match /bookingRequests/{document=**} {
+      allow read, update, delete: if isAdmin();
+      allow create: if hasValidBookingRequestFields();
+    }
+
+    match /contactMessages/{document=**} {
+      allow read, update, delete: if isAdmin();
+      allow create: if hasValidContactMessageFields();
+    }
+
+    // One doc per salon (id = salon slug) with its posted hours. Both salon websites read this
+    // publicly; only the admin (via NailsSalonManagement) writes it.
+    match /locationHours/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

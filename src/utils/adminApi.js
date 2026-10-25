@@ -155,6 +155,48 @@ const createPromotionReminderSignup = async (payload) => {
   });
 };
 
+const createBookingRequest = async (payload) => {
+  const fullName = String(payload?.fullName || '').trim();
+  const phone = String(payload?.phone || '').trim();
+  const email = String(payload?.email || '').trim().toLowerCase();
+  const preferredDate = String(payload?.preferredDate || '').trim();
+  const preferredTime = String(payload?.preferredTime || '').trim();
+  const serviceCategory = String(payload?.serviceCategory || '').trim();
+  const notes = String(payload?.notes || '').trim();
+
+  await addDoc(collection(db, 'bookingRequests'), {
+    fullName,
+    phone,
+    email,
+    preferredDate,
+    preferredTime,
+    serviceCategory,
+    notes,
+    createdAt: serverTimestamp(),
+  });
+};
+
+const createContactMessage = async (payload) => {
+  const fullName = String(payload?.fullName || '').trim();
+  const phone = String(payload?.phone || '').trim();
+  const email = String(payload?.email || '').trim().toLowerCase();
+  const message = String(payload?.message || '').trim();
+
+  await addDoc(collection(db, 'contactMessages'), {
+    fullName,
+    phone,
+    email,
+    message,
+    createdAt: serverTimestamp(),
+  });
+};
+
+// Publicly readable per-salon hours doc, managed from NailsSalonManagement's Firestore Content page.
+const getLocationHours = async () => {
+  const snap = await getDoc(doc(db, 'locationHours', 'casabella'));
+  return snap.exists() ? snap.data() : null;
+};
+
 const getPromotionReminderSignups = async () => {
   await ensureAdminUserAsync();
   const snapshot = await getDocs(query(collection(db, 'promotionReminderSignups'), orderBy('createdAt', 'desc')));
@@ -653,6 +695,9 @@ export {
   getWelcomeOffer,
   createPromotionReminderSignup,
   getPromotionReminderSignups,
+  createBookingRequest,
+  createContactMessage,
+  getLocationHours,
   updateWelcomeOffer,
   getServices,
   updateServicePrices,

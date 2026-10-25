@@ -1,8 +1,18 @@
 import { Link } from 'react-router-dom';
 import Button from './Button';
 import ROUTES from '../constants/routes';
+import useHours from '../hooks/useHours';
 
-const Footer = () => (
+const Footer = () => {
+  const hours = useHours();
+  const sameHours = (a, b) => a === b;
+  const weekdaysSame =
+    sameHours(hours.monday, hours.tuesday) &&
+    sameHours(hours.monday, hours.wednesday) &&
+    sameHours(hours.monday, hours.thursday) &&
+    sameHours(hours.monday, hours.friday);
+
+  return (
   <footer className="footer">
     <div className="container">
       <div className="footer-grid">
@@ -37,9 +47,20 @@ const Footer = () => (
             Hours
           </h3>
           <p className="muted">
-            Mon–Fri: 9:30a – 7:00p <br />
-            Sat: 9:30a – 6:00p <br />
-            Sun: 11:00a – 5:00p
+            {weekdaysSame ? (
+              <>Mon–Fri: {hours.monday} <br /></>
+            ) : (
+              <>
+                Mon: {hours.monday} <br />
+                Tue: {hours.tuesday} <br />
+                Wed: {hours.wednesday} <br />
+                Thu: {hours.thursday} <br />
+                Fri: {hours.friday} <br />
+              </>
+            )}
+            Sat: {hours.saturday} <br />
+            Sun: {hours.sunday}
+            {hours.note ? <><br />{hours.note}</> : null}
           </p>
         </div>
         <div>
@@ -80,6 +101,7 @@ const Footer = () => (
       </div>
     </div>
   </footer>
-);
+  );
+};
 
 export default Footer;

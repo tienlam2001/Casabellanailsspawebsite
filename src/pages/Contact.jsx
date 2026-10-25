@@ -6,6 +6,8 @@ import Button from '../components/Button';
 import ROUTES from '../constants/routes';
 import { validateContact } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
+import { createContactMessage } from '../utils/adminApi';
+import useHours from '../hooks/useHours';
 
 const initialForm = {
   fullName: '',
@@ -27,28 +29,35 @@ const Contact = () => {
     setLocalBusinessJsonLd();
   }, []);
 
+  const hours = useHours();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validation = validateContact(form);
     setErrors(validation);
+    setSubmitError('');
     if (Object.keys(validation).length) return;
 
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      await createContactMessage(form);
       setSubmitted(true);
       setForm(initialForm);
-    }, 350);
+    } catch (error) {
+      setSubmitError(error.message || 'Unable to send your message. Please try again or call us.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -116,6 +125,11 @@ const Contact = () => {
                     placeholder="Share how we can support your visit."
                   />
                 </FormField>
+                {submitError ? (
+                  <p className="muted" style={{ color: 'var(--error, #b42318)', margin: 0 }}>
+                    {submitError}
+                  </p>
+                ) : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center', justifyContent: 'space-between' }}>
                   <p className="muted" style={{ margin: 0 }}>
                     We reply quickly during open hours in Oviedo, Florida.
@@ -146,7 +160,7 @@ const Contact = () => {
                     Weekdays
                   </p>
                   <p className="muted" style={{ margin: 0 }}>
-                    9:30a – 7:00p
+                    {hours.monday}
                   </p>
                 </div>
                 <div>
@@ -154,8 +168,8 @@ const Contact = () => {
                     Weekends
                   </p>
                   <p className="muted" style={{ margin: 0 }}>
-                    Sat 9:30a – 6:00p <br />
-                    Sun 11:00a – 5:00p
+                    Sat {hours.saturday} <br />
+                    Sun {hours.sunday}
                   </p>
                 </div>
               </div>
