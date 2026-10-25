@@ -7,6 +7,8 @@ import ROUTES from '../constants/routes';
 import services from '../data/services.json';
 import { validateBooking } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
+import { createBookingRequest } from '../utils/adminApi';
+import useHours from '../hooks/useHours';
 
 const initialForm = {
   fullName: '',
@@ -35,29 +37,35 @@ const Booking = () => {
     () => Array.from(new Set(services.map((service) => service.category))),
     []
   );
+  const hours = useHours();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validation = validateBooking(form);
     setErrors(validation);
+    setSubmitError('');
     if (Object.keys(validation).length) return;
 
     setSubmitting(true);
-    const entry = { ...form, createdAt: new Date().toISOString() };
-    setTimeout(() => {
-      setSubmitted(entry);
-      setSubmitting(false);
+    try {
+      await createBookingRequest(form);
+      setSubmitted({ ...form, createdAt: new Date().toISOString() });
       setForm(initialForm);
-    }, 350);
+    } catch (error) {
+      setSubmitError(error.message || 'Unable to send your booking request. Please try again or call us.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -212,6 +220,11 @@ const Booking = () => {
                     rows={4}
                   />
                 </FormField>
+                {submitError ? (
+                  <p className="muted" style={{ color: 'var(--error, #b42318)', margin: 0 }}>
+                    {submitError}
+                  </p>
+                ) : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center', justifyContent: 'space-between' }}>
                   <p className="muted" style={{ margin: 0 }}>
                     You will receive a confirmation for Casabella Nail & Spa in Oviedo, Florida.
@@ -254,7 +267,7 @@ const Booking = () => {
                     Weekdays
                   </p>
                   <p className="muted" style={{ margin: 0 }}>
-                    9:00a – 7:00p
+                    {hours.monday}
                   </p>
                 </div>
                 <div>
@@ -262,8 +275,8 @@ const Booking = () => {
                     Weekends
                   </p>
                   <p className="muted" style={{ margin: 0 }}>
-                    Sat 9:00a – 6:00p <br />
-                    Sun 11:00a – 5:00p
+                    Sat {hours.saturday} <br />
+                    Sun {hours.sunday}
                   </p>
                 </div>
               </div>
