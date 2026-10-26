@@ -1,16 +1,12 @@
+import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import Button from './Button';
 import ROUTES from '../constants/routes';
-import useHours from '../hooks/useHours';
+import useHours, { weekdayGroups } from '../hooks/useHours';
 
 const Footer = () => {
   const hours = useHours();
-  const sameHours = (a, b) => a === b;
-  const weekdaysSame =
-    sameHours(hours.monday, hours.tuesday) &&
-    sameHours(hours.monday, hours.wednesday) &&
-    sameHours(hours.monday, hours.thursday) &&
-    sameHours(hours.monday, hours.friday);
+  const weekdays = weekdayGroups(hours);
 
   return (
   <footer className="footer">
@@ -47,17 +43,9 @@ const Footer = () => {
             Hours
           </h3>
           <p className="muted">
-            {weekdaysSame ? (
-              <>Mon–Fri: {hours.monday} <br /></>
-            ) : (
-              <>
-                Mon: {hours.monday} <br />
-                Tue: {hours.tuesday} <br />
-                Wed: {hours.wednesday} <br />
-                Thu: {hours.thursday} <br />
-                Fri: {hours.friday} <br />
-              </>
-            )}
+            {weekdays.map((g) => (
+              <Fragment key={g.label}>{g.label}: {g.value} <br /></Fragment>
+            ))}
             Sat: {hours.saturday} <br />
             Sun: {hours.sunday}
             {hours.note ? <><br />{hours.note}</> : null}

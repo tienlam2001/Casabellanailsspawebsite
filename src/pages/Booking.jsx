@@ -8,7 +8,7 @@ import services from '../data/services.json';
 import { validateBooking } from '../utils/validators';
 import { setLocalBusinessJsonLd, setPageSeo } from '../utils/seo';
 import { createBookingRequest } from '../utils/adminApi';
-import useHours from '../hooks/useHours';
+import useHours, { weekdayGroups } from '../hooks/useHours';
 
 const initialForm = {
   fullName: '',
@@ -262,14 +262,16 @@ const Booking = () => {
                 oviedonail@gmail.com
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginTop: '0.75rem' }}>
-                <div>
-                  <p className="eyebrow" style={{ marginBottom: '0.2rem' }}>
-                    Weekdays
-                  </p>
-                  <p className="muted" style={{ margin: 0 }}>
-                    {hours.monday}
-                  </p>
-                </div>
+                {weekdayGroups(hours).map((g) => (
+                  <div key={g.label}>
+                    <p className="eyebrow" style={{ marginBottom: '0.2rem' }}>
+                      {g.label}
+                    </p>
+                    <p className="muted" style={{ margin: 0 }}>
+                      {g.value}
+                    </p>
+                  </div>
+                ))}
                 <div>
                   <p className="eyebrow" style={{ marginBottom: '0.2rem' }}>
                     Weekends
